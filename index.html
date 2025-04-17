@@ -3,59 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ColabFinder – Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <title>ColabFinder — Login</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f0f2f5;
+      background: #f4f4f4;
       display: flex;
-      height: 100vh;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    .login-box {
+    .container {
       background: white;
       padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
       text-align: center;
     }
     button {
-      background: #4285f4;
+      background-color: #4285F4;
       color: white;
       border: none;
       padding: 12px 20px;
-      border-radius: 8px;
+      border-radius: 5px;
       font-size: 16px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
     button:hover {
-      background: #357ae8;
+      background-color: #357ae8;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2>Welcome to ColabFinder</h2>
-    <p>Find and connect with creators</p>
-    <button onclick="signInWithGoogle()">Continue with Google</button>
+  <div class="container">
+    <h1>Welcome to ColabFinder</h1>
+    <p>Login to start finding collaborators.</p>
+    <button id="google-login-btn">Continue with Google</button>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-   async function signInWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: 'https://colabfinder-frontend.vercel.app/dashboard.html'
-    }
-  });
-  if (error) console.log('Error: ', error.message);
-}
+    document.addEventListener('DOMContentLoaded', function () {
+      const loginBtn = document.getElementById('google-login-btn');
+      loginBtn.addEventListener('click', async function () {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'https://colabfinder-frontend.vercel.app/dashboard.html'
+          }
+        });
+        if (error) {
+          console.error('OAuth sign-in error:', error.message);
+        }
+      });
+    });
   </script>
 </body>
 </html>
