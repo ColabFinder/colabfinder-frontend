@@ -11,24 +11,28 @@
   <!-- Load Supabase Script FIRST -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Then create client and run login logic -->
   <script>
+    // Step 1: Initialize Supabase
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    document.getElementById('login-btn').addEventListener('click', async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://colabfinder-frontend.vercel.app/dashboard.html'
+    // Step 2: Attach listener after Supabase is ready
+    document.addEventListener("DOMContentLoaded", () => {
+      const loginBtn = document.getElementById("login-btn");
+
+      loginBtn.addEventListener("click", async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: "https://colabfinder-frontend.vercel.app/dashboard.html"
+          }
+        });
+
+        if (error) {
+          console.error("Login error:", error.message);
         }
       });
-
-      if (error) {
-        console.error('Google login error:', error.message);
-      }
     });
   </script>
 </body>
