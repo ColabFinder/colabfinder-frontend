@@ -50,8 +50,12 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+        // Debugging: Check supabase object
+        console.log(supabase);
+
         // Function to save profile
         async function saveProfile() {
+            console.log('Save profile button clicked');  // Debugging step
             const creatorType = document.getElementById('creator-type').value;
             const youtubeFollowers = document.getElementById('youtube-followers').value;
             const tiktokFollowers = document.getElementById('tiktok-followers').value;
@@ -60,6 +64,18 @@
             const niches = document.getElementById('niches').value;
             const shortBio = document.getElementById('short-bio').value;
             const preferredCollabs = document.getElementById('preferred-collabs').value;
+
+            // Debugging: Output the collected values to the console
+            console.log({
+                creatorType,
+                youtubeFollowers,
+                tiktokFollowers,
+                instagramFollowers,
+                onlyfansSubscribers,
+                niches,
+                shortBio,
+                preferredCollabs
+            });
 
             // Insert profile data into Supabase
             const { data, error } = await supabase
@@ -85,7 +101,10 @@
         }
 
         // Event listener for Save Profile button
-        document.getElementById('save-profile').addEventListener('click', saveProfile);
+        document.getElementById('save-profile').addEventListener('click', function(event) {
+            event.preventDefault();  // Prevent form submission
+            saveProfile();
+        });
     </script>
 
 </body>
