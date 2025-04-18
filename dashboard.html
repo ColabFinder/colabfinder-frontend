@@ -33,7 +33,7 @@
     <p><strong>Collab Preferences:</strong> <span id="prefs"></span></p>
   </div>
 
-  <button onclick="logout()">Log Out</button>
+  <button id="logout-btn">Log Out</button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
@@ -41,11 +41,16 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    const userInfoDiv = document.getElementById('user-info');
-    const formDiv = document.getElementById('profile-form');
-    const profileDiv = document.getElementById('profile-data');
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('logout-btn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+      });
 
-    async function loadDashboard() {
+      const userInfoDiv = document.getElementById('user-info');
+      const formDiv = document.getElementById('profile-form');
+      const profileDiv = document.getElementById('profile-data');
+
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
         window.location.href = 'index.html';
@@ -96,15 +101,7 @@
         document.getElementById('follower-count').textContent = profile.followers;
         document.getElementById('prefs').textContent = profile.collab_prefs;
       }
-    }
-
-    function logout() {
-      supabase.auth.signOut().then(() => {
-        window.location.href = 'index.html';
-      });
-    }
-
-    loadDashboard();
+    });
   </script>
 </body>
 </html>
