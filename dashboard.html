@@ -3,45 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ColabFinder</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Dashboard - ColabFinder</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 100px;
-    }
-    button {
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      background-color: #4285f4;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #357ae8;
-    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <h1>Welcome to ColabFinder</h1>
-  <p>Find and connect with creators</p>
-  <button id="google-login-btn">Continue with Google</button>
+  <div id="user-info"></div>
 
+  <!-- Profile Setup Form -->
+  <div id="profile-form" class="hidden">
+    <h2>Set Up Your Profile</h2>
+    <form id="setup-form">
+      <label>Full Name: <input type="text" id="full_name" required /></label><br>
+      <label>Platforms (e.g., YouTube, TikTok): <input type="text" id="platforms" required /></label><br>
+      <label>Followers: <input type="number" id="followers" /></label><br>
+      <label>Collab Preferences: <textarea id="collab_prefs" required></textarea></label><br>
+      <button type="submit">Save Profile</button>
+    </form>
+  </div>
+
+  <!-- Profile Display -->
+  <div id="profile-data" class="hidden">
+    <h2>Your Profile</h2>
+    <p><strong>Name:</strong> <span id="name"></span></p>
+    <p><strong>Platforms:</strong> <span id="platform-list"></span></p>
+    <p><strong>Followers:</strong> <span id="follower-count"></span></p>
+    <p><strong>Collab Preferences:</strong> <span id="prefs"></span></p>
+  </div>
+
+  <button id="logout-btn">Log Out</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    document.getElementById("google-login-btn").addEventListener("click", async () => {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://colabfinder-frontend.vercel.app/dashboard.html'  // <-- Make sure this matches your actual dashboard
-        }
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('logout-btn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
       });
+
+      const userInfoDiv = document.getElementById('user-info');
+      const formDiv = document.getElementById('profile-form');
+      const profileDiv = document.getElementById('profile-data');
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      userInfoDiv.innerHTML = `
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><img src="${user.user_metadata.avatar_url || ''}" width="80"/></p>
+      `;
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !profile) {
+        formDiv.classList.remove('hidden');
+        document.getElementById('setup-form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const full_name = document.getElementById('full_name').value;
+          const platforms = document.getElementById('platforms').value;
+          const followers = parseInt(document.getElementById('followers').value) || 0;
+          const collab_prefs = document.getElementById('collab_prefs').value;
+
+          const { error: insertError } = await supabase.from('profiles').insert([
+            {
+              id: user.id,
+              full_name,
+              platforms,
+              followers,
+              collab_prefs
+            }
+          ]);
+
+          if (insertError) {
+            alert('Error saving profile: ' + insertError.message);
+          } else {
+            location.reload();
+          }
+        });
+      } else {
+        profileDiv.classList.remove('hidden');
+        document.getElementById('name').textContent = profile.full_name;
+        document.getElementById('platform-list').textContent = profile.platforms;
+        document.getElementById('follower-count').textContent = profile.followers;
+        document.getElementById('prefs').textContent = profile.collab_prefs;
+      }
     });
   </script>
 </body>
