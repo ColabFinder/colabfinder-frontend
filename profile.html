@@ -1,111 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Set Up Your Profile</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.5.0/dist/umd/supabase.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Set Up Your Profile</title>
 </head>
 <body>
+  <div class="profile-setup">
+    <h2>Set Up Your Profile</h2>
+    <form id="profile-form">
+      <label for="creator-type">Creator Type</label>
+      <select id="creator-type">
+        <option value="YouTuber">YouTuber</option>
+        <option value="TikToker">TikToker</option>
+        <option value="Instagrammer">Instagrammer</option>
+        <option value="OnlyFans">OnlyFans</option>
+      </select>
 
-    <div class="profile-setup">
-        <h2>Set Up Your Profile</h2>
-        <form id="profile-form">
-            <label for="creator-type">Creator Type</label>
-            <select id="creator-type">
-                <option value="YouTuber">YouTuber</option>
-                <option value="TikToker">TikToker</option>
-                <option value="Instagrammer">Instagrammer</option>
-                <option value="OnlyFans">OnlyFans</option>
-            </select>
+      <label for="youtube-followers">YouTube Followers</label>
+      <input type="number" id="youtube-followers" placeholder="e.g. 10000"/>
 
-            <label for="youtube-followers">YouTube Followers</label>
-            <input type="number" id="youtube-followers" placeholder="e.g. 10000">
+      <label for="tiktok-followers">TikTok Followers</label>
+      <input type="number" id="tiktok-followers" placeholder="e.g. 5000"/>
 
-            <label for="tiktok-followers">TikTok Followers</label>
-            <input type="number" id="tiktok-followers" placeholder="e.g. 5000">
+      <label for="instagram-followers">Instagram Followers</label>
+      <input type="number" id="instagram-followers" placeholder="e.g. 15000"/>
 
-            <label for="instagram-followers">Instagram Followers</label>
-            <input type="number" id="instagram-followers" placeholder="e.g. 15000">
+      <label for="onlyfans-subscribers">OnlyFans Subscribers</label>
+      <input type="number" id="onlyfans-subscribers" placeholder="e.g. 200"/>
 
-            <label for="onlyfans-subscribers">OnlyFans Subscribers</label>
-            <input type="number" id="onlyfans-subscribers" placeholder="e.g. 200">
+      <label for="niches">Niches (comma separated)</label>
+      <input type="text" id="niches" placeholder="e.g. fitness, gaming, adult"/>
 
-            <label for="niches">Niches (comma separated)</label>
-            <input type="text" id="niches" placeholder="e.g. fitness, gaming, adult">
+      <label for="short-bio">Short Bio</label>
+      <textarea id="short-bio" placeholder="Tell others about yourself"></textarea>
 
-            <label for="short-bio">Short Bio</label>
-            <textarea id="short-bio" placeholder="Tell others about yourself"></textarea>
+      <label for="preferred-collabs">Preferred Collabs (comma separated)</label>
+      <input type="text" id="preferred-collabs" placeholder="e.g. promo swap, shoutout"/>
 
-            <label for="preferred-collabs">Preferred Collabs (comma separated)</label>
-            <input type="text" id="preferred-collabs" placeholder="e.g. promo swap, shoutout">
+      <button type="button" id="save-profile">Save Profile</button>
+    </form>
+  </div>
 
-            <button type="button" id="save-profile">Save Profile</button>
-        </form>
-    </div>
+  <!-- Supabase must load first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.5.0/dist/umd/supabase.js"></script>
 
-    <script>
-        // Initialize Supabase
-        const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  <!-- Your code must come AFTER the library is loaded -->
+  <script>
+    // ✅ Initialize Supabase
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Debugging: Check supabase object
-        console.log(supabase);
+    async function saveProfile() {
+      console.log("🚀 Save button clicked");
 
-        // Function to save profile
-        async function saveProfile() {
-            console.log('Save profile button clicked');  // Debugging step
-            const creatorType = document.getElementById('creator-type').value;
-            const youtubeFollowers = document.getElementById('youtube-followers').value;
-            const tiktokFollowers = document.getElementById('tiktok-followers').value;
-            const instagramFollowers = document.getElementById('instagram-followers').value;
-            const onlyfansSubscribers = document.getElementById('onlyfans-subscribers').value;
-            const niches = document.getElementById('niches').value;
-            const shortBio = document.getElementById('short-bio').value;
-            const preferredCollabs = document.getElementById('preferred-collabs').value;
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) {
+        alert("You must be logged in to save your profile.");
+        return;
+      }
 
-            // Debugging: Output the collected values to the console
-            console.log({
-                creatorType,
-                youtubeFollowers,
-                tiktokFollowers,
-                instagramFollowers,
-                onlyfansSubscribers,
-                niches,
-                shortBio,
-                preferredCollabs
-            });
+      const profile = {
+        id: user.id,
+        creator_type: document.getElementById("creator-type").value,
+        youtube_followers: parseInt(document.getElementById("youtube-followers").value) || 0,
+        tiktok_followers: parseInt(document.getElementById("tiktok-followers").value) || 0,
+        instagram_followers: parseInt(document.getElementById("instagram-followers").value) || 0,
+        onlyfans_subscribers: parseInt(document.getElementById("onlyfans-subscribers").value) || 0,
+        niches: document.getElementById("niches").value,
+        short_bio: document.getElementById("short-bio").value,
+        preferred_collabs: document.getElementById("preferred-collabs").value,
+      };
 
-            // Insert profile data into Supabase
-            const { data, error } = await supabase
-                .from('profiles')
-                .upsert([
-                    {
-                        creator_type: creatorType,
-                        youtube_followers: youtubeFollowers,
-                        tiktok_followers: tiktokFollowers,
-                        instagram_followers: instagramFollowers,
-                        onlyfans_subscribers: onlyfansSubscribers,
-                        niches: niches,
-                        short_bio: shortBio,
-                        preferred_collabs: preferredCollabs,
-                    },
-                ]);
+      const { error } = await supabase.from("profiles").upsert(profile);
+      if (error) {
+        console.error("❌ Error saving profile:", error.message);
+        alert("Failed to save profile.");
+      } else {
+        alert("✅ Profile saved successfully!");
+      }
+    }
 
-            if (error) {
-                alert('Error saving profile: ' + error.message);
-            } else {
-                alert('Profile saved successfully!');
-            }
-        }
-
-        // Event listener for Save Profile button
-        document.getElementById('save-profile').addEventListener('click', function(event) {
-            event.preventDefault();  // Prevent form submission
-            saveProfile();
-        });
-    </script>
-
+    // ✅ Attach event listener AFTER DOM is ready
+    document.getElementById("save-profile").addEventListener("click", saveProfile);
+  </script>
 </body>
 </html>
