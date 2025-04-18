@@ -3,105 +3,110 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - ColabFinder</title>
+  <title>ColabFinder Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+    }
     .hidden { display: none; }
+    form, .profile { max-width: 500px; margin-top: 2rem; }
+    label { display: block; margin-top: 1rem; }
+    input, textarea { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.25rem; }
   </style>
 </head>
 <body>
   <h1>Welcome to ColabFinder</h1>
-  <div id="user-info"></div>
-
-  <!-- Profile Setup Form -->
-  <div id="profile-form" class="hidden">
-    <h2>Set Up Your Profile</h2>
-    <form id="setup-form">
-      <label>Full Name: <input type="text" id="full_name" required /></label><br>
-      <label>Platforms (e.g., YouTube, TikTok): <input type="text" id="platforms" required /></label><br>
-      <label>Followers: <input type="number" id="followers" /></label><br>
-      <label>Collab Preferences: <textarea id="collab_prefs" required></textarea></label><br>
-      <button type="submit">Save Profile</button>
-    </form>
-  </div>
-
-  <!-- Profile Display -->
-  <div id="profile-data" class="hidden">
-    <h2>Your Profile</h2>
-    <p><strong>Name:</strong> <span id="name"></span></p>
-    <p><strong>Platforms:</strong> <span id="platform-list"></span></p>
-    <p><strong>Followers:</strong> <span id="follower-count"></span></p>
-    <p><strong>Collab Preferences:</strong> <span id="prefs"></span></p>
-  </div>
-
+  <p id="user-email"></p>
   <button id="logout-btn">Log Out</button>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Profile Display -->
+  <div id="profile" class="hidden">
+    <h2>Your Profile</h2>
+    <p><strong>Username:</strong> <span id="display-username"></span></p>
+    <p><strong>Platforms:</strong> <span id="display-platforms"></span></p>
+    <p><strong>Followers:</strong> <span id="display-followers"></span></p>
+    <p><strong>Collab Preferences:</strong> <span id="display-prefs"></span></p>
+  </div>
+
+  <!-- Profile Setup Form -->
+  <form id="profile-form" class="hidden">
+    <h2>Complete Your Profile</h2>
+    <label>Username:
+      <input type="text" id="username" required />
+    </label>
+    <label>Platforms (e.g. YouTube, TikTok):
+      <input type="text" id="platforms" required />
+    </label>
+    <label>Followers:
+      <input type="number" id="followers" required />
+    </label>
+    <label>Collab Preferences:
+      <textarea id="collab_preferences" required></textarea>
+    </label>
+    <button type="submit">Save Profile</button>
+  </form>
+
   <script>
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      document.getElementById('logout-btn').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'index.html';
-      });
-
-      const userInfoDiv = document.getElementById('user-info');
-      const formDiv = document.getElementById('profile-form');
-      const profileDiv = document.getElementById('profile-data');
-
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        window.location.href = 'index.html';
+    async function loadDashboard() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        window.location.href = "/index.html";
         return;
       }
 
-      userInfoDiv.innerHTML = `
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><img src="${user.user_metadata.avatar_url || ''}" width="80"/></p>
-      `;
+      const email = user.email;
+      document.getElementById("user-email").textContent = `Logged in as: ${email}`;
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
 
-      if (error || !profile) {
-        formDiv.classList.remove('hidden');
-        document.getElementById('setup-form').addEventListener('submit', async (e) => {
+      if (profile) {
+        // Display profile
+        document.getElementById("display-username").textContent = profile.username;
+        document.getElementById("display-platforms").textContent = profile.platforms;
+        document.getElementById("display-followers").textContent = profile.followers;
+        document.getElementById("display-prefs").textContent = profile.collab_preferences;
+        document.getElementById("profile").classList.remove("hidden");
+      } else {
+        // Show form
+        document.getElementById("profile-form").classList.remove("hidden");
+
+        document.getElementById("profile-form").addEventListener("submit", async (e) => {
           e.preventDefault();
+          const username = document.getElementById("username").value;
+          const platforms = document.getElementById("platforms").value;
+          const followers = parseInt(document.getElementById("followers").value);
+          const collab_preferences = document.getElementById("collab_preferences").value;
 
-          const full_name = document.getElementById('full_name').value;
-          const platforms = document.getElementById('platforms').value;
-          const followers = parseInt(document.getElementById('followers').value) || 0;
-          const collab_prefs = document.getElementById('collab_prefs').value;
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert([{ id: user.id, email, username, platforms, followers, collab_preferences }]);
 
-          const { error: insertError } = await supabase.from('profiles').insert([
-            {
-              id: user.id,
-              full_name,
-              platforms,
-              followers,
-              collab_prefs
-            }
-          ]);
-
-          if (insertError) {
-            alert('Error saving profile: ' + insertError.message);
+          if (!insertError) {
+            location.reload(); // Reload to see profile
           } else {
-            location.reload();
+            alert("Error saving profile: " + insertError.message);
           }
         });
-      } else {
-        profileDiv.classList.remove('hidden');
-        document.getElementById('name').textContent = profile.full_name;
-        document.getElementById('platform-list').textContent = profile.platforms;
-        document.getElementById('follower-count').textContent = profile.followers;
-        document.getElementById('prefs').textContent = profile.collab_prefs;
       }
+    }
+
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "/index.html";
     });
+
+    loadDashboard();
   </script>
 </body>
 </html>
