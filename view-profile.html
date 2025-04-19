@@ -1,89 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Profile</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0-beta.7/dist/umd/supabase.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Profile</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://vuxzvvxnhsupwscyijni.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eHp2dnhuaHN1cHdzY3lpam5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM0Njc2NjcsImV4cCI6MjAyOTA0MzY2N30.yKn_YfHK0LOw2Ip9J5xRfG1kH5zM3OBvliNN4n_w5uU';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    async function checkUser() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        window.location.href = '/login.html';
+        return;
+      }
+      loadProfile(user);
+    }
+
+    async function loadProfile(user) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Profile fetch error:', error);
+        return;
+      }
+
+      document.getElementById('creatorType').textContent = data.creator_type || 'N/A';
+      document.getElementById('youtubeFollowers').textContent = data.youtube_followers || 'N/A';
+      document.getElementById('tiktokFollowers').textContent = data.tiktok_followers || 'N/A';
+      document.getElementById('instagramFollowers').textContent = data.instagram_followers || 'N/A';
+      document.getElementById('onlyfansSubscribers').textContent = data.onlyfans_subscribers || 'N/A';
+      document.getElementById('niches').textContent = data.niches || 'N/A';
+      document.getElementById('shortBio').textContent = data.short_bio || 'N/A';
+      document.getElementById('preferredCollabs').textContent = data.preferred_collabs || 'N/A';
+    }
+
+    checkUser();
+  </script>
 </head>
 <body>
-    <div class="container">
-        <h1 class="mt-5">Your Profile</h1>
-        <p id="message"></p>
-        
-        <div id="profile" class="mt-4">
-            <p><strong>Creator Type:</strong> <span id="creatorType">Loading...</span></p>
-            <p><strong>YouTube Followers:</strong> <span id="youtubeFollowers">Loading...</span></p>
-            <p><strong>TikTok Followers:</strong> <span id="tiktokFollowers">Loading...</span></p>
-            <p><strong>Instagram Followers:</strong> <span id="instagramFollowers">Loading...</span></p>
-            <p><strong>OnlyFans Subscribers:</strong> <span id="onlyFansSubscribers">Loading...</span></p>
-            <p><strong>Niches:</strong> <span id="niches">Loading...</span></p>
-            <p><strong>Short Bio:</strong> <span id="shortBio">Loading...</span></p>
-            <p><strong>Preferred Collabs:</strong> <span id="preferredCollabs">Loading...</span></p>
-        </div>
-    </div>
-
-    <script>
-        // 1. Initialize Supabase Client
-        const supabaseUrl = "https://eqpmbcbaqgdmrhwmvlya.supabase.co";
-        const supabaseKey = "YOUR_PUBLIC_ANON_KEY";  // Replace with your actual public anon key
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        // 2. Function to check if the user is authenticated
-        async function checkUser() {
-            try {
-                const { data: session, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) {
-                    console.error('Session error:', sessionError);
-                    return; // Stop execution if there's an error in fetching session
-                }
-
-                if (!session || !session.user) {
-                    console.log('User is not authenticated, redirecting to login page');
-                    window.location.href = 'login.html'; // Redirect to login if not authenticated
-                } else {
-                    console.log('User authenticated:', session.user);
-                    fetchProfile(session.user.id); // Fetch profile for the authenticated user
-                }
-            } catch (err) {
-                console.error('Error in checkUser:', err);
-            }
-        }
-
-        // 3. Function to fetch the user's profile data
-        async function fetchProfile(userId) {
-            try {
-                console.log('Fetching profile for user:', userId); // Log userId for debugging
-
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', userId)
-                    .single();
-
-                if (error) {
-                    document.getElementById('message').textContent = `Error fetching profile: ${error.message}`;
-                    console.error('Error fetching profile:', error);
-                    return;
-                }
-
-                console.log('Profile data fetched:', data); // Log fetched data for debugging
-                document.getElementById('creatorType').textContent = data.creator_type || 'N/A';
-                document.getElementById('youtubeFollowers').textContent = data.youtube_followers || 'N/A';
-                document.getElementById('tiktokFollowers').textContent = data.tiktok_followers || 'N/A';
-                document.getElementById('instagramFollowers').textContent = data.instagram_followers || 'N/A';
-                document.getElementById('onlyFansSubscribers').textContent = data.onlyfans_subscribers || 'N/A';
-                document.getElementById('niches').textContent = data.niches || 'N/A';
-                document.getElementById('shortBio').textContent = data.short_bio || 'N/A';
-                document.getElementById('preferredCollabs').textContent = data.preferred_collabs || 'N/A';
-            } catch (err) {
-                console.error('Error in fetchProfile:', err);
-            }
-        }
-
-        // 4. Call checkUser to verify the authentication status
-        checkUser();
-    </script>
+  <div class="container">
+    <h1>Your Profile</h1>
+    <p><strong>Creator Type:</strong> <span id="creatorType">Loading...</span></p>
+    <p><strong>YouTube Followers:</strong> <span id="youtubeFollowers">Loading...</span></p>
+    <p><strong>TikTok Followers:</strong> <span id="tiktokFollowers">Loading...</span></p>
+    <p><strong>Instagram Followers:</strong> <span id="instagramFollowers">Loading...</span></p>
+    <p><strong>OnlyFans Subscribers:</strong> <span id="onlyfansSubscribers">Loading...</span></p>
+    <p><strong>Niches:</strong> <span id="niches">Loading...</span></p>
+    <p><strong>Short Bio:</strong> <span id="shortBio">Loading...</span></p>
+    <p><strong>Preferred Collabs:</strong> <span id="preferredCollabs">Loading...</span></p>
+  </div>
 </body>
 </html>
