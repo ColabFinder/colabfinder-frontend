@@ -2,42 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>View Profile</title>
-  <!-- Optional CSS link – only include if you have styles.css -->
-  <!-- <link rel="stylesheet" href="styles.css" /> -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>👤 Profile</h1>
-  <div>
-    <p><strong>Full Name:</strong> <span id="full-name"></span></p>
-    <p><strong>Username:</strong> <span id="username"></span></p>
-    <p><strong>Email:</strong> <span id="email"></span></p>
-    <p><strong>Creator Type:</strong> <span id="creator-type"></span></p>
-    <p><strong>Bio:</strong> <span id="bio"></span></p>
+  <h1>👤 Your Profile</h1>
+  <div id="profileContainer">
+    <p><strong>Creator Type:</strong> <span id="creator_type"></span></p>
+    <p><strong>YouTube Followers:</strong> <span id="youtube_followers"></span></p>
+    <p><strong>TikTok Followers:</strong> <span id="tiktok_followers"></span></p>
+    <p><strong>Instagram Followers:</strong> <span id="instagram_followers"></span></p>
+    <p><strong>OnlyFans Subscribers:</strong> <span id="onlyfans_subscribers"></span></p>
+    <p><strong>Niches:</strong> <span id="niches"></span></p>
+    <p><strong>Short Bio:</strong> <span id="short_bio"></span></p>
+    <p><strong>Preferred Collabs:</strong> <span id="preferred_collabs"></span></p>
   </div>
-  <button onclick="logout()">Logout</button>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod213bmx5YSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzEzMTU4NzYyLCJleHAiOjE3NDg3MzQ3NjJ9.McQExfAFmdwMJKHBOqbdZK_kHDKmrJkR0MrAX2QbOdg';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod213bmx5YSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzExODUyNjM3LCJleHAiOjE3NDM0Mzg2Mzd9.O8fuBSxIjbNB4U8k12Ywz7kVRsAWZyoWyp_QfTVvZZs'
+    );
 
     async function fetchProfile() {
-      const {
-        data: { user },
-        error: userError
-      } = await supabase.auth.getUser();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      if (userError || !user) {
-        console.error('Error getting user:', userError?.message || 'Not logged in');
-        window.location.href = 'index.html'; // Redirect to login
+      if (sessionError || !session?.user) {
+        console.error('🔒 No session found. Redirecting to login...');
+        window.location.href = 'index.html';
         return;
       }
 
-      const { data: profile, error } = await supabase
+      const user = session.user;
+
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
@@ -45,22 +46,22 @@
 
       if (error) {
         console.error('❌ Error fetching profile:', error.message);
-      } else {
-        console.log('✅ Profile fetched:', profile);
-        document.getElementById('full-name').textContent = profile.full_name || '';
-        document.getElementById('username').textContent = profile.username || '';
-        document.getElementById('email').textContent = profile.email || '';
-        document.getElementById('creator-type').textContent = profile.creator_type || '';
-        document.getElementById('bio').textContent = profile.bio || '';
+        return;
       }
+
+      console.log('✅ Profile data loaded:', data);
+
+      document.getElementById('creator_type').textContent = data.creator_type || '';
+      document.getElementById('youtube_followers').textContent = data.youtube_followers || '';
+      document.getElementById('tiktok_followers').textContent = data.tiktok_followers || '';
+      document.getElementById('instagram_followers').textContent = data.instagram_followers || '';
+      document.getElementById('onlyfans_subscribers').textContent = data.onlyfans_subscribers || '';
+      document.getElementById('niches').textContent = data.niches || '';
+      document.getElementById('short_bio').textContent = data.short_bio || '';
+      document.getElementById('preferred_collabs').textContent = data.preferred_collabs || '';
     }
 
     fetchProfile();
-
-    async function logout() {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
-    }
   </script>
 </body>
 </html>
