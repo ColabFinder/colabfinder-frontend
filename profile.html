@@ -13,6 +13,7 @@
 </head>
 <body>
   <h2>Set Up Your Profile</h2>
+
   <label>Creator Type</label>
   <input type="text" id="creator_type" placeholder="e.g. YouTuber"/>
 
@@ -37,60 +38,58 @@
   <label>Preferred Collabs (comma separated)</label>
   <input type="text" id="preferred_collabs" placeholder="e.g. promo swap, shoutout"/>
 
-  <button onclick="saveProfile()">Save Profile</button>
+  <button id="saveButton">Save Profile</button>
 
-  <!-- Move the script here at the bottom to ensure it loads after everything else -->
+  <!-- Load Supabase JS library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // ✅ Initialize Supabase here AFTER the script is loaded
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+  <!-- Your script using Supabase -->
+  <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      // ✅ Initialize Supabase after the page and library are loaded
+      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+      // ✅ Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         alert("You must be logged in to view this page.");
         window.location.href = '/';
         return;
       }
+
+      // ✅ Save Profile handler
+      document.getElementById('saveButton').addEventListener('click', async () => {
+        console.log("🚀 Save button clicked");
+
+        const profile = {
+          id: user.id,
+          full_name: user.user_metadata?.full_name || 'Anonymous',
+          email: user.email,
+          creator_type: document.getElementById('creator_type').value,
+          youtube_followers: parseInt(document.getElementById('youtube_followers').value) || 0,
+          tiktok_followers: parseInt(document.getElementById('tiktok_followers').value) || 0,
+          instagram_followers: parseInt(document.getElementById('instagram_followers').value) || 0,
+          onlyfans_subscribers: parseInt(document.getElementById('onlyfans_subscribers').value) || 0,
+          niches: document.getElementById('niches').value,
+          short_bio: document.getElementById('short_bio').value,
+          preferred_collabs: document.getElementById('preferred_collabs').value
+        };
+
+        const { error } = await supabase
+          .from('profiles')
+          .upsert(profile, { onConflict: 'id' });
+
+        if (error) {
+          console.error("❌ Error saving profile:", error.message);
+          alert("Error saving profile: " + error.message);
+        } else {
+          alert("✅ Profile saved successfully!");
+          window.location.href = "/dashboard.html";
+        }
+      });
     });
-
-    async function saveProfile() {
-      console.log("🚀 Save button clicked");
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert("You must be logged in to save profile.");
-        return;
-      }
-
-      const profile = {
-        id: user.id,
-        full_name: user.user_metadata.full_name || '',
-        email: user.email,
-        creator_type: document.getElementById('creator_type').value,
-        youtube_followers: parseInt(document.getElementById('youtube_followers').value) || 0,
-        tiktok_followers: parseInt(document.getElementById('tiktok_followers').value) || 0,
-        instagram_followers: parseInt(document.getElementById('instagram_followers').value) || 0,
-        onlyfans_subscribers: parseInt(document.getElementById('onlyfans_subscribers').value) || 0,
-        niches: document.getElementById('niches').value,
-        short_bio: document.getElementById('short_bio').value,
-        preferred_collabs: document.getElementById('preferred_collabs').value
-      };
-
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(profile, { onConflict: 'id' });
-
-      if (error) {
-        console.error("❌ Error saving profile:", error.message);
-        alert("Error saving profile: " + error.message);
-      } else {
-        alert("✅ Profile saved successfully!");
-        window.location.href = "/dashboard.html";
-      }
-    }
   </script>
 </body>
 </html>
