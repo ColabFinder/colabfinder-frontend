@@ -2,32 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>View Profile - ColabFinder</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>View Profile</title>
+  <!-- Optional CSS link – only include if you have styles.css -->
+  <!-- <link rel="stylesheet" href="styles.css" /> -->
 </head>
 <body>
-  <div class="container">
-    <h1>👤 Your Profile</h1>
-    <div id="profile-container">
-      <p><strong>Full Name:</strong> <span id="full_name"></span></p>
-      <p><strong>Email:</strong> <span id="email"></span></p>
-      <p><strong>Creator Type:</strong> <span id="creator_type"></span></p>
-      <p><strong>YouTube Followers:</strong> <span id="youtube_followers"></span></p>
-      <p><strong>TikTok Followers:</strong> <span id="tiktok_followers"></span></p>
-      <p><strong>Instagram Followers:</strong> <span id="instagram_followers"></span></p>
-      <p><strong>OnlyFans Subscribers:</strong> <span id="onlyfans_subscribers"></span></p>
-      <p><strong>Niches:</strong> <span id="niches"></span></p>
-      <p><strong>Short Bio:</strong> <span id="bio"></span></p>
-      <p><strong>Preferred Collabs:</strong> <span id="preferred_collabs"></span></p>
-    </div>
-    <br/>
-    <button onclick="window.location.href='profile.html'">✏️ Edit Profile</button>
-    <button onclick="logout()">🚪 Log Out</button>
+  <h1>👤 Profile</h1>
+  <div>
+    <p><strong>Full Name:</strong> <span id="full-name"></span></p>
+    <p><strong>Username:</strong> <span id="username"></span></p>
+    <p><strong>Email:</strong> <span id="email"></span></p>
+    <p><strong>Creator Type:</strong> <span id="creator-type"></span></p>
+    <p><strong>Bio:</strong> <span id="bio"></span></p>
   </div>
+  <button onclick="logout()">Logout</button>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod213bmx5YSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzEzMTU4NzYyLCJleHAiOjE3NDg3MzQ3NjJ9.McQExfAFmdwMJKHBOqbdZK_kHDKmrJkR0MrAX2QbOdg';
@@ -37,42 +29,38 @@
       const {
         data: { user },
         error: userError
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
-      if (userError) {
-        console.error('Error getting user:', userError.message);
+      if (userError || !user) {
+        console.error('Error getting user:', userError?.message || 'Not logged in');
+        window.location.href = 'index.html'; // Redirect to login
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .single();
 
       if (error) {
-        console.error('❌ Error fetching profile:', error.message)
-        return;
+        console.error('❌ Error fetching profile:', error.message);
+      } else {
+        console.log('✅ Profile fetched:', profile);
+        document.getElementById('full-name').textContent = profile.full_name || '';
+        document.getElementById('username').textContent = profile.username || '';
+        document.getElementById('email').textContent = profile.email || '';
+        document.getElementById('creator-type').textContent = profile.creator_type || '';
+        document.getElementById('bio').textContent = profile.bio || '';
       }
-
-      document.getElementById('full_name').innerText = data.full_name || '';
-      document.getElementById('email').innerText = user.email || '';
-      document.getElementById('creator_type').innerText = data.creator_type || '';
-      document.getElementById('youtube_followers').innerText = data.youtube_followers || '0';
-      document.getElementById('tiktok_followers').innerText = data.tiktok_followers || '0';
-      document.getElementById('instagram_followers').innerText = data.instagram_followers || '0';
-      document.getElementById('onlyfans_subscribers').innerText = data.onlyfans_subscribers || '0';
-      document.getElementById('niches').innerText = data.niches || '';
-      document.getElementById('bio').innerText = data.bio || '';
-      document.getElementById('preferred_collabs').innerText = data.preferred_collabs || '';
     }
+
+    fetchProfile();
 
     async function logout() {
       await supabase.auth.signOut();
       window.location.href = 'index.html';
     }
-
-    fetchProfile();
   </script>
 </body>
 </html>
