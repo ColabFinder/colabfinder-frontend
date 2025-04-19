@@ -55,57 +55,60 @@
   <label>Preferred Collabs (comma separated)</label>
   <input id="preferred_collabs" placeholder="e.g. promo swap, shoutout" />
 
-  <button onclick="saveProfile()">Save Profile</button>
+  <button id="saveBtn">Save Profile</button>
 
   <script>
+    // ✅ Define Supabase Client before anything else
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+    // ✅ Save profile function
     async function saveProfile() {
-      console.log('🚀 Save button clicked');
+      console.log("🚀 Save button clicked");
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
 
-      if (!user) {
-        alert('User not logged in!');
-        return;
+      if (userError) {
+        console.error("❌ Error fetching user:", userError.message);
+        return alert("Error fetching user info.");
       }
 
-      const fullName = user.user_metadata.full_name || 'Anonymous';
+      if (!user) {
+        return alert("User not logged in.");
+      }
 
-      const creator_type = document.getElementById('creator_type').value;
-      const youtube_followers = parseInt(document.getElementById('youtube_followers').value) || 0;
-      const tiktok_followers = parseInt(document.getElementById('tiktok_followers').value) || 0;
-      const instagram_followers = parseInt(document.getElementById('instagram_followers').value) || 0;
-      const onlyfans_subscribers = parseInt(document.getElementById('onlyfans_subscribers').value) || 0;
-      const niches = document.getElementById('niches').value;
-      const bio = document.getElementById('bio').value;
-      const preferred_collabs = document.getElementById('preferred_collabs').value;
+      const fullName = user.user_metadata?.full_name || 'Anonymous';
 
-      const { data, error } = await supabase.from('profiles').upsert([
-        {
-          id: user.id,
-          full_name: fullName,
-          creator_type,
-          youtube_followers,
-          tiktok_followers,
-          instagram_followers,
-          onlyfans_subscribers,
-          niches,
-          bio,
-          preferred_collabs
-        }
-      ]);
+      const profile = {
+        id: user.id,
+        full_name: fullName,
+        creator_type: document.getElementById('creator_type').value,
+        youtube_followers: parseInt(document.getElementById('youtube_followers').value) || 0,
+        tiktok_followers: parseInt(document.getElementById('tiktok_followers').value) || 0,
+        instagram_followers: parseInt(document.getElementById('instagram_followers').value) || 0,
+        onlyfans_subscribers: parseInt(document.getElementById('onlyfans_subscribers').value) || 0,
+        niches: document.getElementById('niches').value,
+        bio: document.getElementById('bio').value,
+        preferred_collabs: document.getElementById('preferred_collabs').value
+      };
+
+      const { data, error } = await supabase.from('profiles').upsert([profile]);
 
       if (error) {
         console.error('❌ Error saving profile:', error.message);
-        alert('Error saving profile: ' + error.message);
-      } else {
-        console.log('✅ Profile saved:', data);
-        alert('Profile saved successfully!');
+        return alert('Error saving profile: ' + error.message);
       }
+
+      console.log('✅ Profile saved:', data);
+      alert('Profile saved successfully!');
     }
+
+    // ✅ Attach the function after DOM is ready
+    document.getElementById("saveBtn").addEventListener("click", saveProfile);
   </script>
 </body>
 </html>
