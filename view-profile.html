@@ -84,6 +84,7 @@
     // Check if user is logged in
     async function checkUser() {
       const user = supabase.auth.user();
+      console.log('Authenticated user:', user); // Log authenticated user
       if (!user) {
         window.location.href = 'login.html'; // Redirect to login if not authenticated
       } else {
@@ -92,6 +93,7 @@
     }
 
     async function fetchProfile(userId) {
+      console.log('Fetching profile for user:', userId); // Log the user ID
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -100,16 +102,18 @@
 
       if (error) {
         document.getElementById('message').textContent = `Error fetching profile: ${error.message}`;
+        console.error('Error fetching profile:', error); // Log the error
       } else {
         // Fill in profile data
-        document.getElementById('creatorType').textContent = data.creator_type;
-        document.getElementById('youtubeFollowers').textContent = data.youtube_followers;
-        document.getElementById('tiktokFollowers').textContent = data.tiktok_followers;
-        document.getElementById('instagramFollowers').textContent = data.instagram_followers;
-        document.getElementById('onlyFansSubscribers').textContent = data.onlyfans_subscribers;
-        document.getElementById('niches').textContent = data.niches;
-        document.getElementById('shortBio').textContent = data.short_bio;
-        document.getElementById('preferredCollabs').textContent = data.preferred_collabs;
+        console.log('Profile data fetched:', data); // Log the fetched data
+        document.getElementById('creatorType').textContent = data.creator_type || 'N/A';
+        document.getElementById('youtubeFollowers').textContent = data.youtube_followers || 'N/A';
+        document.getElementById('tiktokFollowers').textContent = data.tiktok_followers || 'N/A';
+        document.getElementById('instagramFollowers').textContent = data.instagram_followers || 'N/A';
+        document.getElementById('onlyFansSubscribers').textContent = data.onlyfans_subscribers || 'N/A';
+        document.getElementById('niches').textContent = data.niches || 'N/A';
+        document.getElementById('shortBio').textContent = data.short_bio || 'N/A';
+        document.getElementById('preferredCollabs').textContent = data.preferred_collabs || 'N/A';
       }
     }
 
