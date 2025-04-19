@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>View Profile</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>👤 Your Profile</h1>
-  <div id="profileContainer">
+  <div id="profileDisplay">
     <p><strong>Creator Type:</strong> <span id="creator_type"></span></p>
     <p><strong>YouTube Followers:</strong> <span id="youtube_followers"></span></p>
     <p><strong>TikTok Followers:</strong> <span id="tiktok_followers"></span></p>
@@ -20,23 +20,23 @@
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const supabase = createClient(
-      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod213bmx5YSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzExODUyNjM3LCJleHAiOjE3NDM0Mzg2Mzd9.O8fuBSxIjbNB4U8k12Ywz7kVRsAWZyoWyp_QfTVvZZs'
-    );
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod213dmx5YSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzEzMDI4MjkzLCJleHAiOjE3NDg2MDQyOTN9.b2zvD4iuyzTkPG66QByWQzfdChECGv4Fjc3Ufz6UM1A';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     async function fetchProfile() {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
 
-      if (sessionError || !session?.user) {
-        console.error('🔒 No session found. Redirecting to login...');
-        window.location.href = 'index.html';
+      if (userError || !user) {
+        console.error('❌ Error getting user:', userError?.message || 'No user');
+        window.location.href = 'login.html'; // redirect to login if not authenticated
         return;
       }
-
-      const user = session.user;
 
       const { data, error } = await supabase
         .from('profiles')
@@ -48,8 +48,6 @@
         console.error('❌ Error fetching profile:', error.message);
         return;
       }
-
-      console.log('✅ Profile data loaded:', data);
 
       document.getElementById('creator_type').textContent = data.creator_type || '';
       document.getElementById('youtube_followers').textContent = data.youtube_followers || '';
