@@ -23,17 +23,16 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://vuxzvvxnhsupwscyijni.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eHp2dnhuaHN1cHdzY3lpam5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM0Njc2NjcsImV4cCI6MjAyOTA0MzY2N30.yKn_YfHK0LOw2Ip9J5xRfG1kH5zM3OBvliNN4n_w5uU';
-
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Replace with your actual anon key
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     async function checkUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session || !session.user) {
         window.location.href = '/login.html';
         return;
       }
-      loadProfile(user);
+      loadProfile(session.user);
     }
 
     async function loadProfile(user) {
@@ -58,7 +57,7 @@
       document.getElementById('preferredCollabs').textContent = data.preferred_collabs || 'N/A';
     }
 
-    checkUser(); // ✅ Call only after supabase is fully defined
+    checkUser();
   </script>
 </body>
 </html>
