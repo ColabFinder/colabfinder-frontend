@@ -1,65 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>View Profile</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Profile - ColabFinder</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f9f9f9;
+    }
+    .profile-box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .profile-info {
+      margin-bottom: 20px;
+    }
+    .profile-info label {
+      font-weight: bold;
+    }
+    .message {
+      margin-top: 10px;
+      color: red;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <h1>👤 Your Profile</h1>
-  <div id="profileDisplay">
-    <p><strong>Creator Type:</strong> <span id="creator_type"></span></p>
-    <p><strong>YouTube Followers:</strong> <span id="youtube_followers"></span></p>
-    <p><strong>TikTok Followers:</strong> <span id="tiktok_followers"></span></p>
-    <p><strong>Instagram Followers:</strong> <span id="instagram_followers"></span></p>
-    <p><strong>OnlyFans Subscribers:</strong> <span id="onlyfans_subscribers"></span></p>
-    <p><strong>Niches:</strong> <span id="niches"></span></p>
-    <p><strong>Short Bio:</strong> <span id="short_bio"></span></p>
-    <p><strong>Preferred Collabs:</strong> <span id="preferred_collabs"></span></p>
+  <div class="profile-box" id="profile-box">
+    <h2>Your Profile</h2>
+    <div class="profile-info">
+      <label for="creatorType">Creator Type:</label>
+      <div id="creatorType">Loading...</div>
+    </div>
+    <div class="profile-info">
+      <label for="youtubeFollowers">YouTube Followers:</label>
+      <div id="youtubeFollowers">Loading...</div>
+    </div>
+    <div class="profile-info">
+      <label for="tiktokFollowers">TikTok Followers:</label>
+      <div id="tiktokFollowers">Loading...</div>
+    </div>
+    <div class="profile-info">
+      <label for="instagramFollowers">Instagram Followers:</label>
+      <div id="instagramFollowers">Loading...</div>
+    </div>
+    <div class="profile-info">
+      <label for="onlyFansSubscribers">OnlyFans Subscribers:</label>
+      <div id="onlyFansSubscribers">Loading...</div>
+    </div>
+    <div class="profile-info">
+      <label for="niches">Niches:</label>
+      <div id="niches">Loading...</div>
+    </div>
+    <div class="profile-info">
+      <label for="shortBio">Short Bio:</label>
+      <div id="shortBio">Loading...</div>
+    </div>
+    <div class="profile-info">
+      <label for="preferredCollabs">Preferred Collabs:</label>
+      <div id="preferredCollabs">Loading...</div>
+    </div>
+    <div class="message" id="message"></div>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod213dmx5YSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzEzMTIxNDE1LCJleHAiOjE3NDg3OTk4MTV9.GpLEjzRYGnbWlQAiDLK_oTFe8C3Uvb2kLRzJCOZVPiE'
+    );
 
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod213dmx5YSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzEzMDI4MjkzLCJleHAiOjE3NDg2MDQyOTN9.b2zvD4iuyzTkPG66QByWQzfdChECGv4Fjc3Ufz6UM1A';
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    async function fetchProfile() {
-      const {
-        data: { user },
-        error: userError
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error('❌ Error getting user:', userError?.message || 'No user');
-        window.location.href = 'login.html'; // redirect to login if not authenticated
-        return;
+    // Check if user is logged in
+    async function checkUser() {
+      const user = supabase.auth.user();
+      if (!user) {
+        window.location.href = 'login.html'; // Redirect to login if not authenticated
+      } else {
+        fetchProfile(user.id);
       }
+    }
 
+    async function fetchProfile(userId) {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (error) {
-        console.error('❌ Error fetching profile:', error.message);
-        return;
+        document.getElementById('message').textContent = `Error fetching profile: ${error.message}`;
+      } else {
+        // Fill in profile data
+        document.getElementById('creatorType').textContent = data.creator_type;
+        document.getElementById('youtubeFollowers').textContent = data.youtube_followers;
+        document.getElementById('tiktokFollowers').textContent = data.tiktok_followers;
+        document.getElementById('instagramFollowers').textContent = data.instagram_followers;
+        document.getElementById('onlyFansSubscribers').textContent = data.onlyfans_subscribers;
+        document.getElementById('niches').textContent = data.niches;
+        document.getElementById('shortBio').textContent = data.short_bio;
+        document.getElementById('preferredCollabs').textContent = data.preferred_collabs;
       }
-
-      document.getElementById('creator_type').textContent = data.creator_type || '';
-      document.getElementById('youtube_followers').textContent = data.youtube_followers || '';
-      document.getElementById('tiktok_followers').textContent = data.tiktok_followers || '';
-      document.getElementById('instagram_followers').textContent = data.instagram_followers || '';
-      document.getElementById('onlyfans_subscribers').textContent = data.onlyfans_subscribers || '';
-      document.getElementById('niches').textContent = data.niches || '';
-      document.getElementById('short_bio').textContent = data.short_bio || '';
-      document.getElementById('preferred_collabs').textContent = data.preferred_collabs || '';
     }
 
-    fetchProfile();
+    checkUser(); // Call checkUser to ensure the user is logged in
   </script>
 </body>
 </html>
