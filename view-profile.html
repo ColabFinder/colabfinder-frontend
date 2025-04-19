@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Your Profile</title>
   <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <h1>Your Profile</h1>
+    <p><strong>Creator Type:</strong> <span id="creatorType">Loading...</span></p>
+    <p><strong>YouTube Followers:</strong> <span id="youtubeFollowers">Loading...</span></p>
+    <p><strong>TikTok Followers:</strong> <span id="tiktokFollowers">Loading...</span></p>
+    <p><strong>Instagram Followers:</strong> <span id="instagramFollowers">Loading...</span></p>
+    <p><strong>OnlyFans Subscribers:</strong> <span id="onlyfansSubscribers">Loading...</span></p>
+    <p><strong>Niches:</strong> <span id="niches">Loading...</span></p>
+    <p><strong>Short Bio:</strong> <span id="shortBio">Loading...</span></p>
+    <p><strong>Preferred Collabs:</strong> <span id="preferredCollabs">Loading...</span></p>
+  </div>
+
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://vuxzvvxnhsupwscyijni.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eHp2dnhuaHN1cHdzY3lpam5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM0Njc2NjcsImV4cCI6MjAyOTA0MzY2N30.yKn_YfHK0LOw2Ip9J5xRfG1kH5zM3OBvliNN4n_w5uU';
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     async function checkUser() {
@@ -43,20 +58,7 @@
       document.getElementById('preferredCollabs').textContent = data.preferred_collabs || 'N/A';
     }
 
-    checkUser();
+    checkUser(); // ✅ Call only after supabase is fully defined
   </script>
-</head>
-<body>
-  <div class="container">
-    <h1>Your Profile</h1>
-    <p><strong>Creator Type:</strong> <span id="creatorType">Loading...</span></p>
-    <p><strong>YouTube Followers:</strong> <span id="youtubeFollowers">Loading...</span></p>
-    <p><strong>TikTok Followers:</strong> <span id="tiktokFollowers">Loading...</span></p>
-    <p><strong>Instagram Followers:</strong> <span id="instagramFollowers">Loading...</span></p>
-    <p><strong>OnlyFans Subscribers:</strong> <span id="onlyfansSubscribers">Loading...</span></p>
-    <p><strong>Niches:</strong> <span id="niches">Loading...</span></p>
-    <p><strong>Short Bio:</strong> <span id="shortBio">Loading...</span></p>
-    <p><strong>Preferred Collabs:</strong> <span id="preferredCollabs">Loading...</span></p>
-  </div>
 </body>
 </html>
