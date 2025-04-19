@@ -3,114 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ColabFinder - Set Up Profile</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <title>Set Up Your Profile</title>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
-    label {
-      display: block;
-      margin: 15px 0 5px;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 15px;
-      font-size: 16px;
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, textarea, select, button {
+      display: block; margin: 10px 0; padding: 10px; width: 100%; max-width: 400px;
     }
   </style>
 </head>
 <body>
-  <h1>Set Up Your Profile</h1>
-
+  <h2>Set Up Your Profile</h2>
   <label>Creator Type</label>
-  <input id="creator_type" placeholder="e.g. YouTuber" />
+  <input type="text" id="creator_type" placeholder="e.g. YouTuber"/>
 
   <label>YouTube Followers</label>
-  <input id="youtube_followers" type="number" placeholder="e.g. 10000" />
+  <input type="number" id="youtube_followers" placeholder="e.g. 10000"/>
 
   <label>TikTok Followers</label>
-  <input id="tiktok_followers" type="number" placeholder="e.g. 5000" />
+  <input type="number" id="tiktok_followers" placeholder="e.g. 5000"/>
 
   <label>Instagram Followers</label>
-  <input id="instagram_followers" type="number" placeholder="e.g. 15000" />
+  <input type="number" id="instagram_followers" placeholder="e.g. 15000"/>
 
   <label>OnlyFans Subscribers</label>
-  <input id="onlyfans_subscribers" type="number" placeholder="e.g. 200" />
+  <input type="number" id="onlyfans_subscribers" placeholder="e.g. 200"/>
 
   <label>Niches (comma separated)</label>
-  <input id="niches" placeholder="e.g. fitness, gaming, adult" />
+  <input type="text" id="niches" placeholder="e.g. fitness, gaming, adult"/>
 
   <label>Short Bio</label>
-  <textarea id="bio" placeholder="Tell others about yourself"></textarea>
+  <textarea id="short_bio" placeholder="Tell others about yourself"></textarea>
 
   <label>Preferred Collabs (comma separated)</label>
-  <input id="preferred_collabs" placeholder="e.g. promo swap, shoutout" />
+  <input type="text" id="preferred_collabs" placeholder="e.g. promo swap, shoutout"/>
 
-  <button id="saveBtn">Save Profile</button>
+  <button onclick="saveProfile()">Save Profile</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // ✅ Supabase Initialization
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    // ✅ Initialize Supabase first
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-      // ✅ Save Profile Function
-      async function saveProfile() {
-        console.log("🚀 Save button clicked");
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("You must be logged in to view this page.");
+        window.location.href = '/';
+        return;
+      }
+    });
 
-        const {
-          data: { user },
-          error: userError
-        } = await supabase.auth.getUser();
+    async function saveProfile() {
+      console.log("🚀 Save button clicked");
 
-        if (userError) {
-          console.error("❌ Error fetching user:", userError.message);
-          return alert("Error fetching user info.");
-        }
-
-        if (!user) {
-          return alert("User not logged in.");
-        }
-
-        const fullName = user.user_metadata?.full_name || 'Anonymous';
-
-        const profile = {
-          id: user.id,
-          full_name: fullName,
-          creator_type: document.getElementById('creator_type').value,
-          youtube_followers: parseInt(document.getElementById('youtube_followers').value) || 0,
-          tiktok_followers: parseInt(document.getElementById('tiktok_followers').value) || 0,
-          instagram_followers: parseInt(document.getElementById('instagram_followers').value) || 0,
-          onlyfans_subscribers: parseInt(document.getElementById('onlyfans_subscribers').value) || 0,
-          niches: document.getElementById('niches').value,
-          bio: document.getElementById('bio').value,
-          preferred_collabs: document.getElementById('preferred_collabs').value
-        };
-
-        const { data, error } = await supabase.from('profiles').upsert([profile]);
-
-        if (error) {
-          console.error('❌ Error saving profile:', error.message);
-          return alert('Error saving profile: ' + error.message);
-        }
-
-        console.log('✅ Profile saved:', data);
-        alert('Profile saved successfully!');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("You must be logged in to save profile.");
+        return;
       }
 
-      // ✅ Attach Event Handler After DOM and Supabase Init
-      document.getElementById("saveBtn").addEventListener("click", saveProfile);
-    });
+      const profile = {
+        id: user.id,
+        full_name: user.user_metadata.full_name || '',
+        email: user.email,
+        creator_type: document.getElementById('creator_type').value,
+        youtube_followers: parseInt(document.getElementById('youtube_followers').value) || 0,
+        tiktok_followers: parseInt(document.getElementById('tiktok_followers').value) || 0,
+        instagram_followers: parseInt(document.getElementById('instagram_followers').value) || 0,
+        onlyfans_subscribers: parseInt(document.getElementById('onlyfans_subscribers').value) || 0,
+        niches: document.getElementById('niches').value,
+        short_bio: document.getElementById('short_bio').value,
+        preferred_collabs: document.getElementById('preferred_collabs').value
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(profile, { onConflict: 'id' });
+
+      if (error) {
+        console.error("❌ Error saving profile:", error.message);
+        alert("Error saving profile: " + error.message);
+      } else {
+        alert("✅ Profile saved successfully!");
+        window.location.href = "/dashboard.html";
+      }
+    }
   </script>
 </body>
 </html>
