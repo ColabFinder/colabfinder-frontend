@@ -25,46 +25,50 @@
     </div>
 
     <script>
-        // Supabase Initialization
+        // 1. Initialize Supabase Client
         const supabaseUrl = "https://eqpmbcbaqgdmrhwmvlya.supabase.co";
         const supabaseKey = "YOUR_PUBLIC_ANON_KEY";  // Replace with your actual public anon key
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Function to check if the user is authenticated
+        // 2. Function to check if the user is authenticated
         async function checkUser() {
-            const { data: session, error: sessionError } = await supabase.auth.getSession();
-            console.log('Session:', session); // Log the current session for debugging
+            try {
+                const { data: session, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) {
+                    console.error('Session error:', sessionError);
+                    return; // Stop execution if there's an error in fetching session
+                }
 
-            if (sessionError) {
-                console.error('Session error:', sessionError);
-            }
-
-            // If no session or user, redirect to login page
-            if (!session || !session.user) {
-                console.log('User is not authenticated, redirecting to login page');
-                window.location.href = 'login.html'; // Redirect to login if not authenticated
-            } else {
-                console.log('User authenticated:', session.user);
-                fetchProfile(session.user.id); // Fetch the profile for the authenticated user
+                if (!session || !session.user) {
+                    console.log('User is not authenticated, redirecting to login page');
+                    window.location.href = 'login.html'; // Redirect to login if not authenticated
+                } else {
+                    console.log('User authenticated:', session.user);
+                    fetchProfile(session.user.id); // Fetch profile for the authenticated user
+                }
+            } catch (err) {
+                console.error('Error in checkUser:', err);
             }
         }
 
-        // Function to fetch the user's profile data
+        // 3. Function to fetch the user's profile data
         async function fetchProfile(userId) {
-            console.log('Fetching profile for user:', userId); // Log the user ID
+            try {
+                console.log('Fetching profile for user:', userId); // Log userId for debugging
 
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
 
-            if (error) {
-                document.getElementById('message').textContent = `Error fetching profile: ${error.message}`;
-                console.error('Error fetching profile:', error); // Log the error
-            } else {
-                // Fill in profile data
-                console.log('Profile data fetched:', data); // Log the fetched data
+                if (error) {
+                    document.getElementById('message').textContent = `Error fetching profile: ${error.message}`;
+                    console.error('Error fetching profile:', error);
+                    return;
+                }
+
+                console.log('Profile data fetched:', data); // Log fetched data for debugging
                 document.getElementById('creatorType').textContent = data.creator_type || 'N/A';
                 document.getElementById('youtubeFollowers').textContent = data.youtube_followers || 'N/A';
                 document.getElementById('tiktokFollowers').textContent = data.tiktok_followers || 'N/A';
@@ -73,10 +77,12 @@
                 document.getElementById('niches').textContent = data.niches || 'N/A';
                 document.getElementById('shortBio').textContent = data.short_bio || 'N/A';
                 document.getElementById('preferredCollabs').textContent = data.preferred_collabs || 'N/A';
+            } catch (err) {
+                console.error('Error in fetchProfile:', err);
             }
         }
 
-        // Call checkUser to verify the authentication status
+        // 4. Call checkUser to verify the authentication status
         checkUser();
     </script>
 </body>
