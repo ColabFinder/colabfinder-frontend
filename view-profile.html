@@ -83,11 +83,15 @@
 
     // Check if user is logged in
     async function checkUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
+      const user = data?.user;
+
       console.log('Authenticated user:', user); // Log authenticated user
+      
       if (error) {
         console.error('Authentication error:', error);
       }
+
       if (!user) {
         window.location.href = 'login.html'; // Redirect to login if not authenticated
       } else {
