@@ -2,68 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - ColabFinder</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css" />
-  <style>
-    body {
-      margin-top: 50px;
-      text-align: center;
-    }
-    .avatar {
-      border-radius: 50%;
-      height: 80px;
-      width: 80px;
-      margin: 10px auto;
-    }
-  </style>
+  <title>Dashboard</title>
 </head>
 <body>
+  <h1>Welcome to your Dashboard</h1>
+  <nav>
+    <ul>
+      <li><a href="profile.html">Edit Profile</a></li>
+      <li><a href="view-profile.html">View Profile</a></li>
+      <li><a href="#" id="logout">Logout</a></li>
+    </ul>
+  </nav>
 
-  <h1>Welcome to ColabFinder</h1>
-  <div id="user-info"></div>
-  <button id="logout-btn" class="button">Log Out</button>
-
-  <!-- Load Supabase script FIRST -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Then run your code -->
   <script>
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function loadUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        console.error('Not logged in or error:', error);
-        window.location.href = '/';
-        return;
+    async function checkSession() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = 'login.html';
       }
-
-      const name = user.user_metadata?.full_name || "Creator";
-      const email = user.email || "";
-      const avatar = user.user_metadata?.avatar_url;
-
-      document.getElementById('user-info').innerHTML = `
-        ${avatar ? `<img src="${avatar}" class="avatar" alt="Avatar"/>` : ''}
-        <p><strong>${name}</strong></p>
-        <p>${email}</p>
-      `;
     }
 
-    async function logout() {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        alert('Error signing out');
-        return;
-      }
-      window.location.href = '/';
-    }
+    document.getElementById('logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = 'login.html';
+    });
 
-    document.getElementById('logout-btn').addEventListener('click', logout);
-    loadUser();
+    checkSession();
   </script>
 </body>
 </html>
