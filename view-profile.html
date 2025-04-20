@@ -16,23 +16,22 @@
 
     // Check user session
     async function checkUser() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('❌ No session found or error occurred:', error);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('❌ No session found:', sessionError);
         window.location.href = '/login.html';
         return;
       }
       console.log('✅ Session found:', session);
+      localStorage.setItem('supabaseSession', JSON.stringify(session)); // Store session info in localStorage
     }
 
     // Fetch and display the profile
     async function fetchProfile() {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!user) {
-        console.error('❌ No user found');
+      if (userError || !user) {
+        console.error('❌ No user found:', userError);
         return;
       }
 
