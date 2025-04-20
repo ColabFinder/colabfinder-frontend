@@ -1,42 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ColabFinder - Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to ColabFinder</h1>
-  <button id="google-login">Continue with Google</button>
+  <button onclick="loginWithGoogle()">Continue with Google</button>
 
-  <!-- Load Supabase library first -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Then initialize Supabase -->
   <script>
-    const supabase = window.supabase.createClient(
-      "https://eqpmbcbaqdmrhwvlya.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM"
-    );
+    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    document.getElementById("google-login").addEventListener("click", async () => {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loginWithGoogle() {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard.html`
+        }
       });
-      if (error) {
-        console.error("Login error:", error.message);
-      } else {
-        console.log("Login redirecting...", data);
-      }
-    });
 
-    // Check session after login redirect
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        console.log("User is logged in:", data.session.user);
-        window.location.href = "/dashboard.html"; // Or any page you want to go
+      if (error) {
+        console.error('Login error:', error.message);
       }
-    });
+    }
   </script>
 </body>
 </html>
