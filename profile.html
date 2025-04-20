@@ -2,93 +2,59 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Set Up Your Profile</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    input, textarea, select, button {
-      display: block; margin: 10px 0; padding: 10px; width: 100%; max-width: 400px;
-    }
-  </style>
+  <title>Update Profile</title>
 </head>
 <body>
-  <h2>Set Up Your Profile</h2>
+  <h1>Update Your Profile</h1>
+  <form id="profile-form">
+    <label>Creator Type: <input type="text" id="creator_type" required></label><br>
+    <label>YouTube Followers: <input type="number" id="youtube_followers" required></label><br>
+    <label>TikTok Followers: <input type="number" id="tiktok_followers" required></label><br>
+    <label>Instagram Followers: <input type="number" id="instagram_followers" required></label><br>
+    <label>OnlyFans Subscribers: <input type="number" id="onlyfans_subscribers" required></label><br>
+    <label>Niches: <input type="text" id="niches" required></label><br>
+    <label>Short Bio: <textarea id="short_bio" required></textarea></label><br>
+    <label>Preferred Collabs: <input type="text" id="preferred_collabs" required></label><br>
+    <button type="submit">Save</button>
+  </form>
 
-  <label>Creator Type</label>
-  <input type="text" id="creator_type" placeholder="e.g. YouTuber"/>
-
-  <label>YouTube Followers</label>
-  <input type="number" id="youtube_followers" placeholder="e.g. 10000"/>
-
-  <label>TikTok Followers</label>
-  <input type="number" id="tiktok_followers" placeholder="e.g. 5000"/>
-
-  <label>Instagram Followers</label>
-  <input type="number" id="instagram_followers" placeholder="e.g. 15000"/>
-
-  <label>OnlyFans Subscribers</label>
-  <input type="number" id="onlyfans_subscribers" placeholder="e.g. 200"/>
-
-  <label>Niches (comma separated)</label>
-  <input type="text" id="niches" placeholder="e.g. fitness, gaming, adult"/>
-
-  <label>Short Bio</label>
-  <textarea id="short_bio" placeholder="Tell others about yourself"></textarea>
-
-  <label>Preferred Collabs (comma separated)</label>
-  <input type="text" id="preferred_collabs" placeholder="e.g. promo swap, shoutout"/>
-
-  <button id="saveButton">Save Profile</button>
-
-  <!-- Load Supabase JS library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Your script using Supabase -->
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // ✅ Initialize Supabase after the page and library are loaded
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-      // ✅ Check if user is logged in
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert("You must be logged in to view this page.");
-        window.location.href = '/';
+        alert("Please log in first.");
         return;
       }
 
-      // ✅ Save Profile handler
-      document.getElementById('saveButton').addEventListener('click', async () => {
-        console.log("🚀 Save button clicked");
+      const profileData = {
+        creator_type: document.getElementById('creator_type').value,
+        youtube_followers: +document.getElementById('youtube_followers').value,
+        tiktok_followers: +document.getElementById('tiktok_followers').value,
+        instagram_followers: +document.getElementById('instagram_followers').value,
+        onlyfans_subscribers: +document.getElementById('onlyfans_subscribers').value,
+        niches: document.getElementById('niches').value,
+        short_bio: document.getElementById('short_bio').value,
+        preferred_collabs: document.getElementById('preferred_collabs').value
+      };
 
-        const profile = {
-          id: user.id,
-          full_name: user.user_metadata?.full_name || 'Anonymous',
-          email: user.email,
-          creator_type: document.getElementById('creator_type').value,
-          youtube_followers: parseInt(document.getElementById('youtube_followers').value) || 0,
-          tiktok_followers: parseInt(document.getElementById('tiktok_followers').value) || 0,
-          instagram_followers: parseInt(document.getElementById('instagram_followers').value) || 0,
-          onlyfans_subscribers: parseInt(document.getElementById('onlyfans_subscribers').value) || 0,
-          niches: document.getElementById('niches').value,
-          short_bio: document.getElementById('short_bio').value,
-          preferred_collabs: document.getElementById('preferred_collabs').value
-        };
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, ...profileData });
 
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(profile, { onConflict: 'id' });
-
-        if (error) {
-          console.error("❌ Error saving profile:", error.message);
-          alert("Error saving profile: " + error.message);
-        } else {
-          alert("✅ Profile saved successfully!");
-          window.location.href = "/dashboard.html";
-        }
-      });
+      if (error) {
+        console.error(error);
+        alert("Failed to save profile.");
+      } else {
+        alert("Profile saved!");
+        window.location.href = 'dashboard.html';
+      }
     });
   </script>
 </body>
