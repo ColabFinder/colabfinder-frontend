@@ -1,46 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard</title>
-</head>
-<body>
-  <h1>Welcome to the Dashboard</h1>
-  <div id="user-info"></div>
-  <button id="logout">Logout</button>
-
-  <!-- Supabase initialization with ES module -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Fetch and display user info
-    async function loadUser() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (session && session.user) {
-        const user = session.user;
-        document.getElementById('user-info').innerHTML = `
-          <p><strong>Email:</strong> ${user.email}</p>
-          <p><strong>User ID:</strong> ${user.id}</p>
-        `;
-      } else {
-        console.error('No active session:', error?.message);
-        window.location.href = '/index.html'; // Redirect back if not logged in
-      }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColabFinder Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
     }
 
-    loadUser();
+    .dashboard-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-    // Logout button
-    document.getElementById('logout').addEventListener('click', async () => {
+    .user-info {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-info h2 {
+      margin-bottom: 10px;
+    }
+
+    .user-info p {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+
+    .logout-button {
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .logout-button:hover {
+      background-color: #e60000;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="user-info">
+      <h2>Welcome to the Dashboard</h2>
+      <p><strong>Email:</strong> <span id="user-email"></span></p>
+      <p><strong>User ID:</strong> <span id="user-id"></span></p>
+      <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Supabase client
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Check if user is logged in
+    const checkSession = async () => {
+      const user = supabase.auth.user();
+      
+      if (!user) {
+        // Redirect to login page if no user session is found
+        window.location.href = '/login.html';
+      } else {
+        // If user is logged in, display the user's email and ID
+        document.getElementById('user-email').textContent = user.email;
+        document.getElementById('user-id').textContent = user.id;
+      }
+    };
+
+    // Call session check on page load
+    checkSession();
+
+    // Logout function
+    const logout = async () => {
       await supabase.auth.signOut();
-      window.location.href = '/index.html';
-    });
+      window.location.href = '/login.html';  // Redirect to login after logout
+    };
   </script>
 </body>
 </html>
