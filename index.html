@@ -1,52 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ColabFinder</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  </head>
-  <body>
-    <h1>Welcome to ColabFinder</h1>
-    <button id="login-google">Continue with Google</button>
-    <button id="logout" style="display:none;">Logout</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ColabFinder - Login</title>
+</head>
+<body>
+  <h1>Welcome to ColabFinder</h1>
+  <button id="google-login">Continue with Google</button>
 
-    <script>
-      // ✅ Initialize Supabase first
-      const supabase = supabase.createClient(
-        "https://eqpmbcbaqgdmrhwvlya.supabase.co", // Your Supabase URL
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM" // Replace with your actual public anon key
-      );
+  <!-- Load Supabase library first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-      // ✅ Check session when page loads
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          console.log("User is logged in:", session.user);
-          document.getElementById("logout").style.display = "block";
-          document.getElementById("login-google").style.display = "none";
-        } else {
-          console.log("No session found");
-        }
+  <!-- Then initialize Supabase -->
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://eqpmbcbaqdmrhwvlya.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM"
+    );
+
+    document.getElementById("google-login").addEventListener("click", async () => {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
       });
+      if (error) {
+        console.error("Login error:", error.message);
+      } else {
+        console.log("Login redirecting...", data);
+      }
+    });
 
-      // ✅ Google login
-      document.getElementById("login-google").addEventListener("click", async () => {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-        });
-        if (error) console.error("Login error:", error.message);
-      });
-
-      // ✅ Logout
-      document.getElementById("logout").addEventListener("click", async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          console.error("Logout error:", error.message);
-        } else {
-          console.log("User logged out");
-          window.location.reload();
-        }
-      });
-    </script>
-  </body>
+    // Check session after login redirect
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        console.log("User is logged in:", data.session.user);
+        window.location.href = "/dashboard.html"; // Or any page you want to go
+      }
+    });
+  </script>
+</body>
 </html>
