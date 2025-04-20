@@ -1,31 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>ColabFinder - Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ColabFinder Login</title>
 </head>
 <body>
   <h1>Welcome to ColabFinder</h1>
-  <button onclick="loginWithGoogle()">Continue with Google</button>
+  <button id="login-google">Continue with Google</button>
+
+  <!-- Supabase JS library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-   const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function loginWithGoogle() {
-      const { error } = await supabase.auth.signInWithOAuth({
+    document.getElementById('login-google').addEventListener('click', async () => {
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard.html`
-        }
       });
-
       if (error) {
         console.error('Login error:', error.message);
       }
-    }
+    });
+
+    // Handle token from URL if returning from OAuth login
+    window.addEventListener('load', async () => {
+      const hash = window.location.hash;
+      if (hash.includes('access_token')) {
+        const session = await supabase.auth.getSession();
+        if (session?.data?.session) {
+          console.log('Login successful, redirecting...');
+          window.location.href = '/dashboard.html';
+        } else {
+          console.log('Failed to extract session after OAuth redirect');
+        }
+      }
+    });
   </script>
 </body>
 </html>
