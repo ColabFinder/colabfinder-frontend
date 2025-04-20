@@ -9,37 +9,35 @@
   <h1>Welcome to the Dashboard</h1>
   <div id="user-info">Loading user info...</div>
 
-  <!-- Load Supabase library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Initialize Supabase and fetch user -->
+  <!-- Use a single <script type="module"> to import and use Supabase -->
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
+    // Initialize Supabase
     const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwvlya.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4NjI4MDIsImV4cCI6MjA1NTQzODgwMn0.NF_l54QOJW5kmrzayOgZmBRgiyro5kLuZQOiOXgtfZQ';
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Function to fetch user info
     const getUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
 
       const infoDiv = document.getElementById('user-info');
       if (error) {
-        console.error('Error getting user:', error.message);
+        console.error('Error fetching user:', error.message);
         infoDiv.textContent = 'Failed to load user info.';
         return;
       }
 
-      if (user) {
-        infoDiv.textContent = `Hello, ${user.email}!`;
+      if (data?.user) {
+        infoDiv.textContent = `Hello, ${data.user.email}!`;
       } else {
-        infoDiv.textContent = 'No user is logged in.';
-        // optionally redirect to login
+        // Redirect to login if not logged in
         window.location.href = '/login.html';
       }
     };
 
+    // Run on page load
     getUser();
   </script>
 </body>
