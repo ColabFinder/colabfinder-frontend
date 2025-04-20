@@ -26,10 +26,12 @@
   <button id="logout">Logout</button>
 
   <script>
+    // ✅ Initialize Supabase FIRST
     const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwvlya.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // ✅ Load user profile from Supabase
     async function loadProfile(user) {
       const { data, error } = await supabase
         .from('profiles')
@@ -45,6 +47,7 @@
       }
     }
 
+    // ✅ Save profile to Supabase
     async function updateProfile(user) {
       const fullName = document.getElementById('fullName').value;
       const bio = document.getElementById('bio').value;
@@ -64,18 +67,7 @@
       }
     }
 
-    document.getElementById('saveProfile').addEventListener('click', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        updateProfile(user);
-      }
-    });
-
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
-    });
-
+    // ✅ Wait for DOM to load
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -87,7 +79,19 @@
       document.getElementById('userEmail').textContent = user.email;
       document.getElementById('userId').textContent = user.id;
 
-      loadProfile(user);
+      // Load profile
+      await loadProfile(user);
+
+      // Hook up Save button
+      document.getElementById('saveProfile').addEventListener('click', () => {
+        updateProfile(user);
+      });
+
+      // Hook up Logout button
+      document.getElementById('logout').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+      });
     });
   </script>
 </body>
