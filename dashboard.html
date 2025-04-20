@@ -4,41 +4,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to the Dashboard</h1>
-  <div id="user-info">Loading user info...</div>
+  <p id="user-email">Loading user...</p>
 
-  <!-- Use a single <script type="module"> to import and use Supabase -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  <script>
+    const SUPABASE_URL = 'https://eqpmbcbaqdmrhwvlya.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    // Initialize Supabase
-    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwvlya.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4NjI4MDIsImV4cCI6MjA1NTQzODgwMn0.NF_l54QOJW5kmrzayOgZmBRgiyro5kLuZQOiOXgtfZQ';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Function to fetch user info
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
+    async function init() {
+      const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
 
-      const infoDiv = document.getElementById('user-info');
-      if (error) {
-        console.error('Error fetching user:', error.message);
-        infoDiv.textContent = 'Failed to load user info.';
+      if (error && !data.session) {
+        console.log('No session from URL:', error);
+      }
+
+      getUser();
+    }
+
+    async function getUser() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        console.error('Error fetching user:', error?.message);
+        document.getElementById('user-email').textContent = 'Failed to load user info.';
+        // Optional: redirect to login if user not found
+        window.location.href = '/index.html';
         return;
       }
 
-      if (data?.user) {
-        infoDiv.textContent = `Hello, ${data.user.email}!`;
-      } else {
-        // Redirect to login if not logged in
-        window.location.href = '/login.html';
-      }
-    };
+      document.getElementById('user-email').textContent = `Logged in as ${user.email}`;
+    }
 
-    // Run on page load
-    getUser();
+    init();
   </script>
 </body>
 </html>
