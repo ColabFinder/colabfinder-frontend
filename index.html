@@ -9,14 +9,14 @@
   <h1>Welcome to ColabFinder</h1>
   <button id="login-google">Continue with Google</button>
 
-  <!-- Supabase JS library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Use ES module version of Supabase client -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-  <script>
     const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     document.getElementById('login-google').addEventListener('click', async () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -27,16 +27,16 @@
       }
     });
 
-    // Handle token from URL if returning from OAuth login
+    // Check if redirected back from OAuth
     window.addEventListener('load', async () => {
       const hash = window.location.hash;
       if (hash.includes('access_token')) {
-        const session = await supabase.auth.getSession();
-        if (session?.data?.session) {
+        const { data, error } = await supabase.auth.getSession();
+        if (data?.session) {
           console.log('Login successful, redirecting...');
           window.location.href = '/dashboard.html';
         } else {
-          console.log('Failed to extract session after OAuth redirect');
+          console.error('No session found:', error?.message);
         }
       }
     });
