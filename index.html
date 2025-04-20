@@ -1,45 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ColabFinder Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
 </head>
 <body>
-  <h1>Welcome to ColabFinder</h1>
-  <button id="login-google">Continue with Google</button>
+    <h1>Welcome to ColabFinder</h1>
+    <button id="login-btn">Login with Google</button>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+        // Initialize Supabase client
+        const supabase = Supabase.createClient('https://eqpmbcbaqgdmrhwmvlya.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM');
 
-  <!-- Use ES module version of Supabase client -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        // Check if the user is already logged in
+        document.addEventListener("DOMContentLoaded", () => {
+            const session = supabase.auth.session();
+            if (session) {
+                window.location.href = "dashboard.html";  // Redirect to dashboard if logged in
+            }
+        });
 
-    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    document.getElementById('login-google').addEventListener('click', async () => {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-      });
-      if (error) {
-        console.error('Login error:', error.message);
-      }
-    });
-
-    // Check if redirected back from OAuth
-    window.addEventListener('load', async () => {
-      const hash = window.location.hash;
-      if (hash.includes('access_token')) {
-        const { data, error } = await supabase.auth.getSession();
-        if (data?.session) {
-          console.log('Login successful, redirecting...');
-          window.location.href = '/dashboard.html';
-        } else {
-          console.error('No session found:', error?.message);
-        }
-      }
-    });
-  </script>
+        // Login with Google
+        document.getElementById("login-btn").addEventListener("click", async () => {
+            const { user, error } = await supabase.auth.signIn({ provider: "google" });
+            if (error) {
+                console.error("Error logging in with Google:", error.message);
+            } else {
+                window.location.href = "dashboard.html";  // Redirect to dashboard after login
+            }
+        });
+    </script>
 </body>
 </html>
