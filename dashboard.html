@@ -1,51 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
 </head>
 <body>
-  <h1>Welcome to Your Dashboard</h1>
+  <h1>Welcome to the Dashboard</h1>
   <div id="user-info"></div>
-  <button onclick="logout()">Logout</button>
 
-  <!-- Load Supabase JS v2 -->
+  <!-- Supabase JS Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script>
-    // Properly extract createClient from Supabase
-    const { createClient } = supabase;
+  <!-- Your actual script -->
+  <script type="module">
+    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwvlya.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY'; // Replace with your real anon key
 
-    // Your Supabase project URL and anon key
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Create the Supabase client
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    // Use Supabase only AFTER it's initialized
+    const getUser = async () => {
+      const {
+        data: { user },
+        error
+      } = await supabase.auth.getUser();
 
-    // Get the logged-in user and display info
-    async function loadUser() {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-
-      if (user) {
-        document.getElementById('user-info').innerHTML = `
-          <p>Email: ${user.email}</p>
-          <p>Provider: ${user.app_metadata?.provider || 'email'}</p>
-        `;
+      if (error) {
+        console.error('Error fetching user:', error);
       } else {
-        // No user, redirect to login
-        window.location.href = 'login.html';
+        document.getElementById('user-info').textContent = `Hello, ${user.email}`;
       }
-    }
+    };
 
-    // Logout function
-    async function logout() {
-      await supabaseClient.auth.signOut();
-      window.location.href = 'login.html';
-    }
-
-    // Load user when page loads
-    loadUser();
+    getUser();
   </script>
 </body>
 </html>
