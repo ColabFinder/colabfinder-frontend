@@ -70,33 +70,34 @@
     <label for="avatar-url">Avatar URL</label>
     <input type="text" id="avatar-url" placeholder="Paste image URL"/>
 
-    <button onclick="saveProfile()">Save Changes</button>
+    <button id="save-button">Save Changes</button>
   </div>
 
   <script type="module">
-    window.onload = async () => {
-      // Initialize Supabase
-      const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = createClient(supabaseUrl, supabaseKey);
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
 
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.addEventListener('DOMContentLoaded', async () => {
       const { data: { user } } = await supabase.auth.getUser();
+
       if (!user) {
         window.location.href = '/login.html';
-      } else {
-        const email = user.email;
-        const meta = user.user_metadata;
-
-        document.getElementById('email').textContent = email;
-        document.getElementById('display-name').value = meta.full_name || '';
-        document.getElementById('bio').value = meta.bio || '';
-        document.getElementById('avatar-url').value = meta.avatar_url || '';
-        document.getElementById('avatar').src = meta.avatar_url || 'https://via.placeholder.com/100';
+        return;
       }
 
-      // Save the profile changes
-      window.saveProfile = async () => {
+      const email = user.email;
+      const meta = user.user_metadata || {};
+
+      document.getElementById('email').textContent = email;
+      document.getElementById('display-name').value = meta.full_name || '';
+      document.getElementById('bio').value = meta.bio || '';
+      document.getElementById('avatar-url').value = meta.avatar_url || '';
+      document.getElementById('avatar').src = meta.avatar_url || 'https://via.placeholder.com/100';
+
+      document.getElementById('save-button').addEventListener('click', async () => {
         const displayName = document.getElementById('display-name').value;
         const bio = document.getElementById('bio').value;
         const avatarUrl = document.getElementById('avatar-url').value;
@@ -115,8 +116,8 @@
           alert('Profile updated!');
           document.getElementById('avatar').src = avatarUrl;
         }
-      }
-    }
+      });
+    });
   </script>
 </body>
 </html>
