@@ -1,46 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to the Dashboard</h1>
-  <p id="user-email">Loading user...</p>
+  <div id="user-info"></div>
 
   <script>
-    const SUPABASE_URL = 'https://eqpmbcbaqdmrhwvlya.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    async function init() {
-      const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
-
-      if (error && !data.session) {
-        console.log('No session from URL:', error);
-      }
-
-      getUser();
-    }
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function getUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
 
-      if (error || !user) {
-        console.error('Error fetching user:', error?.message);
-        document.getElementById('user-email').textContent = 'Failed to load user info.';
-        // Optional: redirect to login if user not found
-        window.location.href = '/index.html';
+      if (error || !data?.user) {
+        console.error('Error fetching user:', error?.message || 'No user found');
+        document.getElementById('user-info').textContent = 'Failed to load user info.';
         return;
       }
 
-      document.getElementById('user-email').textContent = `Logged in as ${user.email}`;
+      const user = data.user;
+      document.getElementById('user-info').innerHTML = `
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>User ID:</strong> ${user.id}</p>
+      `;
     }
 
-    init();
+    getUser();
   </script>
 </body>
 </html>
