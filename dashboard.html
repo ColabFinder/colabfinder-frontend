@@ -1,75 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Dashboard - ColabFinder</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to the Dashboard</h1>
-  <div id="user-info">
-    <p><strong>Email:</strong> <span id="user-email"></span></p>
-    <p><strong>User ID:</strong> <span id="user-id"></span></p>
-  </div>
+  <div id="user-info"></div>
 
+  <hr>
   <h2>Edit Profile</h2>
-  <form id="profile-form">
-    <label for="full_name">Full Name:</label><br/>
-    <input type="text" id="full_name" name="full_name" /><br/><br/>
+  <label for="full_name">Full Name:</label><br>
+  <input type="text" id="full_name" placeholder="Enter full name"><br><br>
+  <label for="bio">Bio:</label><br>
+  <textarea id="bio" rows="4" cols="50" placeholder="Write a short bio..."></textarea><br><br>
+  <button onclick="updateProfile()">Update Profile</button>
 
-    <label for="bio">Bio:</label><br/>
-    <textarea id="bio" name="bio" rows="4" cols="50"></textarea><br/><br/>
+  <hr>
+  <button onclick="logout()">Logout</button>
 
-    <button type="submit">Update Profile</button>
-  </form>
+  <script>
+    const supabaseUrl = 'https://eqpmbcbaqdmrhwvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  <br/>
-  <button id="logout">Logout</button>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-    const supabaseUrl = 'https://eqpmbcbaqdmrhwvlya.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    async function getUserProfile() {
+    async function checkSession() {
       const {
-        data: { session },
-        error: sessionError
-      } = await supabase.auth.getSession()
+        data: { session }
+      } = await supabase.auth.getSession();
 
-      if (sessionError || !session) {
-        window.location.href = 'index.html'
-        return
+      if (!session) {
+        window.location.href = 'index.html';
+        return;
       }
 
-      const user = session.user
-      document.getElementById('user-email').textContent = user.email
-      document.getElementById('user-id').textContent = user.id
+      const user = session.user;
+      document.getElementById('user-info').innerHTML = `
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>User ID:</strong> ${user.id}</p>
+      `;
 
-      // Load profile data from 'profiles' table
-      const { data: profile, error: profileError } = await supabase
+      loadProfile(user.id);
+    }
+
+    async function loadProfile(userId) {
+      const { data, error } = await supabase
         .from('profiles')
         .select('full_name, bio')
-        .eq('id', user.id)
-        .single()
+        .eq('id', userId)
+        .single();
 
-      if (profile && !profileError) {
-        document.getElementById('full_name').value = profile.full_name || ''
-        document.getElementById('bio').value = profile.bio || ''
+      if (data) {
+        document.getElementById('full_name').value = data.full_name || '';
+        document.getElementById('bio').value = data.bio || '';
       }
     }
 
-    async function updateUserProfile(event) {
-      event.preventDefault()
-
-      const fullName = document.getElementById('full_name').value
-      const bio = document.getElementById('bio').value
-
+    async function updateProfile() {
       const {
-        data: { user }
-      } = await supabase.auth.getUser()
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      const user = session.user;
+      const fullName = document.getElementById('full_name').value;
+      const bio = document.getElementById('bio').value;
 
       const { error } = await supabase
         .from('profiles')
@@ -77,23 +72,22 @@
           id: user.id,
           full_name: fullName,
           bio: bio
-        })
+        });
 
       if (error) {
-        alert('Error updating profile: ' + error.message)
+        console.error('Error updating profile:', error.message);
+        alert('Failed to update profile');
       } else {
-        alert('Profile updated!')
+        alert('Profile updated!');
       }
     }
 
-    document.getElementById('profile-form').addEventListener('submit', updateUserProfile)
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    }
 
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut()
-      window.location.href = 'index.html'
-    })
-
-    getUserProfile()
+    checkSession();
   </script>
 </body>
 </html>
