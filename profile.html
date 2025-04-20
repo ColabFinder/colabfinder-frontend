@@ -2,60 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Update Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    img {
+      max-width: 100px;
+      border-radius: 50%;
+      margin-bottom: 20px;
+    }
+    .nav {
+      margin-bottom: 20px;
+    }
+    .nav a {
+      text-decoration: none;
+      color: #007bff;
+    }
+  </style>
 </head>
 <body>
-  <h1>Update Your Profile</h1>
-  <form id="profile-form">
-    <label>Creator Type: <input type="text" id="creator_type" required></label><br>
-    <label>YouTube Followers: <input type="number" id="youtube_followers" required></label><br>
-    <label>TikTok Followers: <input type="number" id="tiktok_followers" required></label><br>
-    <label>Instagram Followers: <input type="number" id="instagram_followers" required></label><br>
-    <label>OnlyFans Subscribers: <input type="number" id="onlyfans_subscribers" required></label><br>
-    <label>Niches: <input type="text" id="niches" required></label><br>
-    <label>Short Bio: <textarea id="short_bio" required></textarea></label><br>
-    <label>Preferred Collabs: <input type="text" id="preferred_collabs" required></label><br>
-    <button type="submit">Save</button>
-  </form>
+  <div class="container">
+    <div class="nav">
+      <a href="dashboard.html">&larr; Back to Dashboard</a>
+    </div>
+    <h2>Your Profile</h2>
+    <div id="user-info">
+      <img id="avatar" src="" alt="User Avatar" />
+      <p><strong>Email:</strong> <span id="email"></span></p>
+    </div>
+    <label for="display-name">Display Name</label>
+    <input type="text" id="display-name" placeholder="Your name"/>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    <label for="bio">Bio</label>
+    <textarea id="bio" rows="4" placeholder="Tell us about yourself..."></textarea>
 
-    document.getElementById('profile-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    <label for="avatar-url">Avatar URL</label>
+    <input type="text" id="avatar-url" placeholder="Paste image URL"/>
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert("Please log in first.");
-        return;
-      }
+    <button onclick="saveProfile()">Save Changes</button>
+  </div>
 
-      const profileData = {
-        creator_type: document.getElementById('creator_type').value,
-        youtube_followers: +document.getElementById('youtube_followers').value,
-        tiktok_followers: +document.getElementById('tiktok_followers').value,
-        instagram_followers: +document.getElementById('instagram_followers').value,
-        onlyfans_subscribers: +document.getElementById('onlyfans_subscribers').value,
-        niches: document.getElementById('niches').value,
-        short_bio: document.getElementById('short_bio').value,
-        preferred_collabs: document.getElementById('preferred_collabs').value
-      };
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({ id: user.id, ...profileData });
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      window.location.href = '/login.html'
+    } else {
+      const email = user.email
+      const meta = user.user_metadata
+
+      document.getElementById('email').textContent = email
+      document.getElementById('display-name').value = meta.full_name || ''
+      document.getElementById('bio').value = meta.bio || ''
+      document.getElementById('avatar-url').value = meta.avatar_url || ''
+      document.getElementById('avatar').src = meta.avatar_url || 'https://via.placeholder.com/100'
+    }
+
+    async function saveProfile() {
+      const displayName = document.getElementById('display-name').value
+      const bio = document.getElementById('bio').value
+      const avatarUrl = document.getElementById('avatar-url').value
+
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: displayName,
+          bio: bio,
+          avatar_url: avatarUrl,
+        }
+      })
 
       if (error) {
-        console.error(error);
-        alert("Failed to save profile.");
+        alert('Error updating profile: ' + error.message)
       } else {
-        alert("Profile saved!");
-        window.location.href = 'dashboard.html';
+        alert('Profile updated!')
+        document.getElementById('avatar').src = avatarUrl
       }
-    });
+    }
   </script>
 </body>
 </html>
