@@ -1,36 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to the Dashboard</h1>
   <div id="user-info"></div>
+  <button id="logout">Logout</button>
 
-  <script>
+  <!-- Supabase initialization with ES module -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
     const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function getUser() {
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error || !data?.user) {
-        console.error('Error fetching user:', error?.message || 'No user found');
-        document.getElementById('user-info').textContent = 'Failed to load user info.';
-        return;
+    // Fetch and display user info
+    async function loadUser() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (session && session.user) {
+        const user = session.user;
+        document.getElementById('user-info').innerHTML = `
+          <p><strong>Email:</strong> ${user.email}</p>
+          <p><strong>User ID:</strong> ${user.id}</p>
+        `;
+      } else {
+        console.error('No active session:', error?.message);
+        window.location.href = '/index.html'; // Redirect back if not logged in
       }
-
-      const user = data.user;
-      document.getElementById('user-info').innerHTML = `
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><strong>User ID:</strong> ${user.id}</p>
-      `;
     }
 
-    getUser();
+    loadUser();
+
+    // Logout button
+    document.getElementById('logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/index.html';
+    });
   </script>
 </body>
 </html>
