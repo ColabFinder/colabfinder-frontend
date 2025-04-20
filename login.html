@@ -15,17 +15,23 @@
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    let supabase; // Declare it first
 
-    // ✅ Google login with redirect override
-    document.getElementById('login-google').addEventListener('click', async () => {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html'
+    window.addEventListener('DOMContentLoaded', () => {
+      // ✅ Initialize only after the page fully loads
+      supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+      document.getElementById('login-google').addEventListener('click', async () => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html'
+          }
+        });
+        if (error) {
+          console.error('Login error:', error.message);
         }
       });
-      if (error) console.error('Login error:', error.message);
     });
   </script>
 </body>
