@@ -7,29 +7,36 @@
 </head>
 <body>
   <h1>Welcome to the Dashboard</h1>
-  <div id="user-info"></div>
+  <div id="user-info">Loading user info...</div>
 
-  <!-- Supabase JS Library -->
+  <!-- Load Supabase library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Your actual script -->
+  <!-- Initialize Supabase and fetch user -->
   <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
     const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwvlya.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY'; // Replace with your real anon key
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4NjI4MDIsImV4cCI6MjA1NTQzODgwMn0.NF_l54QOJW5kmrzayOgZmBRgiyro5kLuZQOiOXgtfZQ';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Use Supabase only AFTER it's initialized
     const getUser = async () => {
-      const {
-        data: { user },
-        error
-      } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
 
+      const infoDiv = document.getElementById('user-info');
       if (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error getting user:', error.message);
+        infoDiv.textContent = 'Failed to load user info.';
+        return;
+      }
+
+      if (user) {
+        infoDiv.textContent = `Hello, ${user.email}!`;
       } else {
-        document.getElementById('user-info').textContent = `Hello, ${user.email}`;
+        infoDiv.textContent = 'No user is logged in.';
+        // optionally redirect to login
+        window.location.href = '/login.html';
       }
     };
 
