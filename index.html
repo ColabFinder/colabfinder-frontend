@@ -3,51 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ColabFinder - Connect & Collaborate</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      text-align: center;
-      background-color: #1e293b;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    p {
-      color: #cbd5e1;
-      margin-bottom: 30px;
-    }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      background-color: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #2563eb;
-    }
-  </style>
+  <title>Login</title>
 </head>
 <body>
   <div class="container">
-    <h1>Welcome to ColabFinder</h1>
-    <p>Connect and collaborate with other content creators</p>
     <button id="google-login-btn">Continue with Google</button>
   </div>
 
@@ -56,23 +15,10 @@
   <script>
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    document.getElementById('google-login-btn').onclick = async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-      });
-      if (error) {
-        alert('Login error: ' + error.message);
-      }
-    };
-
-    // If already logged in, redirect to dashboard
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        window.location.href = "/dashboard.html";
-      }
+    document.getElementById('google-login-btn').addEventListener('click', async () => {
+      await supabase.auth.signInWithOAuth({ provider: 'google' });
     });
   </script>
 </body>
