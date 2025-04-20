@@ -1,59 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - ColabFinder</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Login</h1>
-
-  <input type="email" id="email" placeholder="Email" required />
-  <input type="password" id="password" placeholder="Password" required />
-  <button onclick="login()">Login</button>
-  <button onclick="loginWithProvider()">Login with Google</button>
-
-  <!-- Load Supabase JS v2 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <h1>Login to ColabFinder</h1>
+  <button id="login-google">Login with Google</button>
 
   <script>
-    // Extract createClient from the loaded Supabase library
-    const { createClient } = supabase;
-
-    // Your Supabase project URL and anon key
+    // ✅ Your Supabase credentials
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    // Now create the Supabase client
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Email login function
-    async function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
+    // ✅ Google login with redirect override
+    document.getElementById('login-google').addEventListener('click', async () => {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html'
+        }
       });
-
-      if (error) {
-        alert('Login error: ' + error.message);
-      } else {
-        alert('Login successful!');
-        window.location.href = 'dashboard.html';
-      }
-    }
-
-    // Google login function
-    async function loginWithProvider() {
-      const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'google'
-      });
-
-      if (error) {
-        alert('Google login error: ' + error.message);
-      }
-    }
+      if (error) console.error('Login error:', error.message);
+    });
   </script>
 </body>
 </html>
