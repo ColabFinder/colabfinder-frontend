@@ -6,50 +6,52 @@
 </head>
 <body>
   <h1>Login</h1>
+
   <input type="email" id="email" placeholder="Email" required />
   <input type="password" id="password" placeholder="Password" required />
   <button onclick="login()">Login</button>
-  <button class="social-btn" onclick="loginWithProvider('google')">Login with Google</button>
+  <button onclick="loginWithProvider()">Login with Google</button>
 
-  <!-- Load Supabase script -->
+  <!-- Load Supabase JS v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- JavaScript for authentication logic -->
   <script>
-    // Ensure Supabase client initialization is after the script is loaded
+    // Extract createClient from the loaded Supabase library
+    const { createClient } = supabase;
+
+    // Your Supabase project URL and anon key
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Log in using email/password
+    // Now create the Supabase client
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    // Email login function
     async function login() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      const { user, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
-        alert(error.message);
+        alert('Login error: ' + error.message);
       } else {
         alert('Login successful!');
         window.location.href = 'dashboard.html';
       }
     }
 
-    // Log in using external provider (Google)
-    async function loginWithProvider(provider) {
-      const { user, error } = await supabase.auth.signInWithOAuth({
-        provider
+    // Google login function
+    async function loginWithProvider() {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google'
       });
 
       if (error) {
-        alert(error.message);
-      } else {
-        alert('Login successful!');
-        window.location.href = 'dashboard.html';
+        alert('Google login error: ' + error.message);
       }
     }
   </script>
