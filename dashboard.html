@@ -1,105 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - ColabFinder</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Welcome to the Dashboard</h1>
-
-  <div id="profile-section" style="margin-bottom: 20px;">
-    <h2>Edit Profile</h2>
-    <label for="fullName">Full Name:</label><br>
-    <input type="text" id="fullName" placeholder="Enter full name"><br><br>
-
-    <label for="bio">Bio:</label><br>
-    <textarea id="bio" placeholder="Write a short bio..." rows="4" cols="50"></textarea><br><br>
-
-    <button id="saveProfile">Update Profile</button>
-  </div>
-
-  <div id="user-info">
-    <p><strong>Email:</strong> <span id="userEmail"></span></p>
-    <p><strong>User ID:</strong> <span id="userId"></span></p>
-  </div>
-
+  <h1>Welcome to Your Dashboard</h1>
+  <div id="user-info"></div>
   <button id="logout">Logout</button>
 
   <script>
-    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwvlya.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    // ✅ Your Supabase credentials
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function loadProfile(user) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, bio')
-        .eq('id', user.id)
-        .single();
+    // ✅ Parse tokens from the URL on first load
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data, error } = await supabase.auth.getSession();
 
-      if (data) {
-        document.getElementById('fullName').value = data.full_name || '';
-        document.getElementById('bio').value = data.bio || '';
-      } else if (error && error.code !== 'PGRST116') {
-        alert('Failed to load profile: ' + error.message);
-      }
-    }
-
-    async function updateProfile(user) {
-      const fullName = document.getElementById('fullName').value;
-      const bio = document.getElementById('bio').value;
-
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: fullName,
-          bio: bio
-        });
-
-      if (error) {
-        alert('Error updating profile: ' + error.message);
-      } else {
-        alert('Profile updated!');
-      }
-    }
-
-    async function init() {
-      // ✅ First: check if redirected with access_token in URL hash
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        const { error } = await supabase.auth.exchangeCodeForSession(window.location.hash);
-        if (error) {
-          alert('Failed to exchange token: ' + error.message);
+      if (!data.session) {
+        // Try to recover session from URL hash
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        if (exchangeError) {
+          console.error('Failed to exchange token:', exchangeError.message);
         }
-        // ✅ Clean up the URL so hash doesn't stay visible
-        window.location.hash = '';
       }
 
-      // ✅ Now check if user is logged in
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        window.location.href = 'index.html';
-        return;
+      // ✅ Get the updated session/user after exchange
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+
+      if (user) {
+        document.getElementById('user-info').innerHTML = `
+          <p><strong>Name:</strong> ${user.user_metadata.full_name}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
+          <img src="${user.user_metadata.avatar_url}" width="100" />
+        `;
+      } else {
+        document.getElementById('user-info').innerText = 'No user session found.';
       }
+    });
 
-      const user = data.user;
-      document.getElementById('userEmail').textContent = user.email;
-      document.getElementById('userId').textContent = user.id;
-
-      await loadProfile(user);
-
-      document.getElementById('saveProfile').addEventListener('click', () => {
-        updateProfile(user);
-      });
-
-      document.getElementById('logout').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'index.html';
-      });
-    }
-
-    window.addEventListener('DOMContentLoaded', init);
+    // ✅ Logout
+    document.getElementById('logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = 'login.html';
+    });
   </script>
 </body>
 </html>
