@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Login</title>
-  <!-- Load Supabase script FIRST -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Login</h1>
@@ -13,7 +11,12 @@
   <button onclick="login()">Login</button>
   <button class="social-btn" onclick="loginWithProvider('google')">Login with Google</button>
 
+  <!-- Load Supabase script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- JavaScript for authentication logic -->
   <script>
+    // Ensure Supabase client initialization is after the script is loaded
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
