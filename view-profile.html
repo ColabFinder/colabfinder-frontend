@@ -1,37 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
   <title>View Profile</title>
-  <link rel="stylesheet" href="styles.css">
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+</head>
+<body>
+  <h1>👤 Your Profile</h1>
+  <p>Creator Type: <span id="creator_type">Loading...</span></p>
+  <p>YouTube Followers: <span id="youtube_followers">Loading...</span></p>
+  <p>TikTok Followers: <span id="tiktok_followers">Loading...</span></p>
+  <p>Instagram Followers: <span id="instagram_followers">Loading...</span></p>
+  <p>OnlyFans Subscribers: <span id="onlyfans_subscribers">Loading...</span></p>
+  <p>Niches: <span id="niches">Loading...</span></p>
+  <p>Short Bio: <span id="short_bio">Loading...</span></p>
+  <p>Preferred Collabs: <span id="preferred_collabs">Loading...</span></p>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'YOUR_PUBLIC_ANON_KEY'; // Replace with your actual Supabase key
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    window.supabase = supabase; // Make it globally available
-
-    // Check user session
-    async function checkUser() {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        console.error('❌ No session found:', sessionError);
-        window.location.href = '/login.html';
-        return;
-      }
-      console.log('✅ Session found:', session);
-      localStorage.setItem('supabaseSession', JSON.stringify(session)); // Store session info in localStorage
-    }
-
-    // Fetch and display the profile
-    async function fetchProfile() {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error('❌ No user found:', userError);
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("User not found. Redirecting...");
+        window.location.href = 'login.html';
         return;
       }
 
@@ -42,39 +36,21 @@
         .single();
 
       if (error) {
-        console.error('❌ Error fetching profile:', error.message);
+        console.error(error);
         return;
       }
 
-      // Display the profile data
-      document.getElementById('creator-type').textContent = data.creator_type || 'Loading...';
-      document.getElementById('youtube-followers').textContent = data.youtube_followers || 'Loading...';
-      document.getElementById('tiktok-followers').textContent = data.tiktok_followers || 'Loading...';
-      document.getElementById('instagram-followers').textContent = data.instagram_followers || 'Loading...';
-      document.getElementById('onlyfans-subscribers').textContent = data.onlyfans_subscribers || 'Loading...';
-      document.getElementById('niches').textContent = data.niches || 'Loading...';
-      document.getElementById('short-bio').textContent = data.short_bio || 'Loading...';
-      document.getElementById('preferred-collabs').textContent = data.preferred_collabs || 'Loading...';
+      document.getElementById('creator_type').textContent = data.creator_type;
+      document.getElementById('youtube_followers').textContent = data.youtube_followers;
+      document.getElementById('tiktok_followers').textContent = data.tiktok_followers;
+      document.getElementById('instagram_followers').textContent = data.instagram_followers;
+      document.getElementById('onlyfans_subscribers').textContent = data.onlyfans_subscribers;
+      document.getElementById('niches').textContent = data.niches;
+      document.getElementById('short_bio').textContent = data.short_bio;
+      document.getElementById('preferred_collabs').textContent = data.preferred_collabs;
     }
 
-    // On page load, check user and fetch the profile
-    document.addEventListener('DOMContentLoaded', async () => {
-      await checkUser();
-      await fetchProfile();
-    });
+    loadProfile();
   </script>
-</head>
-<body>
-  <div id="profile-container">
-    <h1>👤 Your Profile</h1>
-    <p><strong>Creator Type:</strong> <span id="creator-type">Loading...</span></p>
-    <p><strong>YouTube Followers:</strong> <span id="youtube-followers">Loading...</span></p>
-    <p><strong>TikTok Followers:</strong> <span id="tiktok-followers">Loading...</span></p>
-    <p><strong>Instagram Followers:</strong> <span id="instagram-followers">Loading...</span></p>
-    <p><strong>OnlyFans Subscribers:</strong> <span id="onlyfans-subscribers">Loading...</span></p>
-    <p><strong>Niches:</strong> <span id="niches">Loading...</span></p>
-    <p><strong>Short Bio:</strong> <span id="short-bio">Loading...</span></p>
-    <p><strong>Preferred Collabs:</strong> <span id="preferred-collabs">Loading...</span></p>
-  </div>
 </body>
 </html>
