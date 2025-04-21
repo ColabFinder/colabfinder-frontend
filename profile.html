@@ -2,38 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Your Profile</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="profile-script.js"></script>
 </head>
 <body>
-  <h2>Your Profile</h2>
-
+  <h1>Your Profile</h1>
   <div>
-    <h3>User Avatar</h3>
-    <img id="avatar" src="https://via.placeholder.com/100" alt="Avatar" width="100" height="100" />
+    <img id="avatar" src="https://i.pravatar.cc/100" alt="Avatar" width="100" height="100" />
+    <p><strong>Avatar</strong></p>
+    <p><strong>Full Name</strong></p>
+    <input type="text" id="full_name" placeholder="Enter full name" />
+    <p><strong>Email</strong></p>
+    <input type="text" id="email" disabled />
+    <p><strong>Bio</strong></p>
+    <textarea id="bio" placeholder="Enter bio"></textarea>
+    <p><strong>Avatar URL</strong></p>
+    <input type="text" id="avatar_url" placeholder="Enter avatar URL" />
+    <br /><br />
+    <button id="save">Save Profile</button>
+    <button id="logout">Logout</button>
   </div>
-
-  <form id="profile-form">
-    <label for="fullName">Full Name</label><br />
-    <input type="text" id="fullName" placeholder="Enter full name" /><br /><br />
-
-    <label for="email">Email</label><br />
-    <input type="email" id="email" disabled /><br /><br />
-
-    <label for="bio">Bio</label><br />
-    <input type="text" id="bio" placeholder="Enter short bio" /><br /><br />
-
-    <label for="avatarUrl">Avatar URL</label><br />
-    <input type="text" id="avatarUrl" placeholder="Enter avatar URL" /><br /><br />
-
-    <button type="submit">Save Profile</button>
-  </form>
-
-  <button id="logout">Logout</button>
-
-  <p id="statusMessage"></p>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="profile-script.js"></script>
+  <div id="status" style="color: green;"></div>
 </body>
 </html>
