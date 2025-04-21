@@ -3,87 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Profile</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #f9f9f9;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    img {
-      border-radius: 50%;
-      width: 100px;
-      height: 100px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-    input, textarea, select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .avatar {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 15px;
-    }
-  </style>
+  <title>Your Profile</title>
 </head>
 <body>
-  <h2>Your Profile</h2>
+  <h1>Your Profile</h1>
 
-  <div class="avatar">
-    <img id="user-avatar" src="https://via.placeholder.com/100" alt="User Avatar" onerror="this.src='https://via.placeholder.com/100';">
-    <div>
-      <label for="avatar-url">Avatar URL</label>
-      <input type="text" id="avatar-url" placeholder="Enter avatar URL" />
-    </div>
+  <div>
+    <label>User Avatar</label><br>
+    <img id="user-avatar" src="https://placehold.co/100x100?text=Avatar" alt="User Avatar"
+         onerror="this.src='https://placehold.co/100x100?text=Avatar';">
   </div>
 
-  <label for="full-name">Full Name</label>
-  <input type="text" id="full-name" />
+  <form id="profile-form">
+    <div>
+      <label>Full Name</label><br>
+      <input type="text" id="full-name" />
+    </div>
 
-  <label for="email">Email</label>
-  <input type="email" id="email" disabled />
+    <div>
+      <label>Email</label><br>
+      <input type="email" id="email" disabled />
+    </div>
 
-  <label for="bio">Bio</label>
-  <textarea id="bio" rows="3"></textarea>
+    <div>
+      <label>Bio</label><br>
+      <textarea id="bio"></textarea>
+    </div>
 
-  <label for="collab-type">Collab Type</label>
-  <input type="text" id="collab-type" placeholder="E.g., Paid, Shoutout, UGC"/>
+    <div>
+      <label>Avatar URL</label><br>
+      <input type="url" id="avatar-url" placeholder="Enter avatar URL" />
+    </div>
 
-  <label for="skills">Skills</label>
-  <input type="text" id="skills" placeholder="E.g., Photography, Video Editing"/>
+    <div>
+      <label>Collab Type</label><br>
+      <input type="text" id="collab-type" />
+    </div>
 
-  <label for="platforms">Platforms</label>
-  <input type="text" id="platforms" placeholder="E.g., Instagram, TikTok, YouTube"/>
+    <div>
+      <label>Skills</label><br>
+      <input type="text" id="skills" />
+    </div>
 
-  <button id="save-profile">Save Profile</button>
+    <div>
+      <label>Platforms</label><br>
+      <input type="text" id="platforms" />
+    </div>
+
+    <button type="submit">Save Profile</button>
+  </form>
+
   <button id="logout">Logout</button>
 
-  <script type="module" src="./profile-script.js"></script>
+  <script type="module" src="profile-script.js"></script>
 </body>
 </html>
