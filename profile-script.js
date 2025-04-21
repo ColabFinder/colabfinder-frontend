@@ -1,65 +1,82 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+// Supabase Initialization
+const { createClient } = supabase;
+const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co'; // Replace with your Supabase URL
+const supabaseKey = 'YOUR_SUPABASE_KEY'; // Replace with your Supabase anon key
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-const supabase = createClient(supabaseUrl, supabaseKey)
+// Check if user is logged in
+const user = supabase.auth.user();
+if (!user) {
+  window.location.href = "login.html"; // Redirect to login if no user is logged in
+}
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    window.location.href = 'login.html'
-    return
-  }
-
-  document.getElementById('email').value = user.email
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('full_name, avatar_url, bio, collab_type, skills, platforms')
-    .eq('user_id', user.id)
-    .single()
-
-  if (error) {
-    console.error('Profile load error:', error.message)
-  } else {
-    document.getElementById('full-name').value = data.full_name || ''
-    document.getElementById('avatar-url').value = data.avatar_url || ''
-    document.getElementById('bio').value = data.bio || ''
-    document.getElementById('collab-type').value = data.collab_type || ''
-    document.getElementById('skills').value = data.skills || ''
-    document.getElementById('platforms').value = data.platforms || ''
-    document.getElementById('user-avatar').src = data.avatar_url || 'https://placehold.co/100x100?text=Avatar'
-  }
-
-  document.getElementById('profile-form').addEventListener('submit', async (e) => {
-    e.preventDefault()
-
-    const updates = {
-      user_id: user.id,
-      full_name: document.getElementById('full-name').value,
-      avatar_url: document.getElementById('avatar-url').value,
-      bio: document.getElementById('bio').value,
-      collab_type: document.getElementById('collab-type').value,
-      skills: document.getElementById('skills').value,
-      platforms: document.getElementById('platforms').value,
-      updated_at: new Date(),
-    }
-
-    const { error } = await supabase
+// Load user profile and collaborations
+async function loadProfile() {
+  try {
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .upsert(updates, { onConflict: ['user_id'] })
+      .select('id, full_name, email, bio, avatar_url, collab_type, skills, platforms')
+      .eq('user_id', user.id)
+      .single();
 
-    if (error) {
-      alert('Error saving profile: ' + error.message)
-    } else {
-      alert('Profile saved!')
-      document.getElementById('user-avatar').src = updates.avatar_url || 'https://placehold.co/100x100?text=Avatar'
+    if (profileError) {
+      console.error("Profile load error:", profileError);
+      return;
     }
-  })
 
-  document.getElementById('logout').addEventListener('click', async () => {
-    await supabase.auth.signOut()
-    window.location.href = 'login.html'
-  })
-})
+    // Update profile information on the page
+    document.getElementById('full-name').textContent = profile.full_name || 'N/A';
+    document.getElementById('email').textContent = profile.email || 'N/A';
+    document.getElementById('bio').textContent = profile.bio || 'N/A';
+    document.getElementById('profile-avatar').src = profile.avatar_url || 'https://via.placeholder.com/100';
+    
+    // Display collaboration data
+    loadCollaborations();
+
+  } catch (error) {
+    console.error("Error loading profile:", error);
+  }
+}
+
+// Load collaborations
+async function loadCollaborations() {
+  try {
+    const { data: collaborations, error: collaborationsError } = await supabase
+      .from('collaborations')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (collaborationsError) {
+      console.error("Error loading collaborations:", collaborationsError);
+      return;
+    }
+
+    const collaborationsList = document.getElementById('collaborations-list');
+    collaborationsList.innerHTML = ''; // Clear current list
+
+    if (collaborations.length === 0) {
+      collaborationsList.innerHTML = '<li>No collaborations found.</li>';
+    } else {
+      collaborations.forEach(collab => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `Collaboration: ${collab.name} - Status: ${collab.status}`;
+        collaborationsList.appendChild(listItem);
+      });
+    }
+  } catch (error) {
+    console.error("Error loading collaborations:", error);
+  }
+}
+
+// Event listener for editing the profile
+document.getElementById('edit-profile-btn').addEventListener('click', () => {
+  window.location.href = "edit-profile.html"; // Redirect to edit profile page
+});
+
+// Event listener for adding collaboration
+document.getElementById('add-collaboration-btn').addEventListener('click', () => {
+  window.location.href = "add-collaboration.html"; // Redirect to add collaboration page
+});
+
+// Call loadProfile when the page loads
+document.addEventListener('DOMContentLoaded', loadProfile);
