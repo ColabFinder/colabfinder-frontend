@@ -4,45 +4,36 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Your Profile</title>
-  <link rel="stylesheet" href="styles.css" />
-
-  <!-- Supabase JS (MUST LOAD BEFORE profile-script.js) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Your profile-script will run AFTER supabase is defined -->
-  <script defer src="profile-script.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h2>Your Profile</h2>
+  <h2>Your Profile</h2>
 
-    <div>
-      <label>User Avatar</label><br>
-      <img id="avatar-preview" src="https://placehold.co/100x100" width="100" alt="Avatar" />
-    </div>
-
-    <div>
-      <label for="full-name">Full Name</label><br>
-      <input type="text" id="full-name" placeholder="Enter full name" />
-    </div>
-
-    <div>
-      <label for="email">Email</label><br>
-      <input type="email" id="email" disabled />
-    </div>
-
-    <div>
-      <label for="bio">Bio</label><br>
-      <textarea id="bio" rows="3" placeholder="Enter your bio"></textarea>
-    </div>
-
-    <div>
-      <label for="avatar-url">Avatar URL</label><br>
-      <input type="text" id="avatar-url" placeholder="Enter avatar URL" />
-    </div>
-
-    <button id="save-profile">Save Profile</button>
-    <button id="logout">Logout</button>
+  <div>
+    <h3>User Avatar</h3>
+    <img id="avatar" src="https://via.placeholder.com/100" alt="Avatar" width="100" height="100" />
   </div>
+
+  <form id="profile-form">
+    <label for="fullName">Full Name</label><br />
+    <input type="text" id="fullName" placeholder="Enter full name" /><br /><br />
+
+    <label for="email">Email</label><br />
+    <input type="email" id="email" disabled /><br /><br />
+
+    <label for="bio">Bio</label><br />
+    <input type="text" id="bio" placeholder="Enter short bio" /><br /><br />
+
+    <label for="avatarUrl">Avatar URL</label><br />
+    <input type="text" id="avatarUrl" placeholder="Enter avatar URL" /><br /><br />
+
+    <button type="submit">Save Profile</button>
+  </form>
+
+  <button id="logout">Logout</button>
+
+  <p id="statusMessage"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="profile-script.js"></script>
 </body>
 </html>
