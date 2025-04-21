@@ -1,4 +1,5 @@
-const supabase = supabase.createClient(
+const { createClient } = supabase;
+const supabaseClient = createClient(
   'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
 );
@@ -6,7 +7,7 @@ const supabase = supabase.createClient(
 document.addEventListener('DOMContentLoaded', async () => {
   const {
     data: { user }
-  } = await supabase.auth.getUser();
+  } = await supabaseClient.auth.getUser();
 
   if (!user) {
     window.location.href = 'login.html';
@@ -15,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('email').value = user.email;
 
-  const { data: profile, error } = await supabase
+  const { data: profile, error } = await supabaseClient
     .from('profiles')
     .select('id, full_name, avatar_url, bio')
     .eq('user_id', user.id)
@@ -27,9 +28,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('fullName').value = profile.full_name || '';
     document.getElementById('avatarUrl').value = profile.avatar_url || '';
     document.getElementById('bio').value = profile.bio || '';
-
     document.getElementById('avatar').src =
-      profile.avatar_url || 'https://via.placeholder.com/100';
+      profile.avatar_url || 'https://i.pravatar.cc/100';
   }
 });
 
@@ -42,9 +42,9 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
 
   const {
     data: { user }
-  } = await supabase.auth.getUser();
+  } = await supabaseClient.auth.getUser();
 
-  const { data: existingProfile } = await supabase
+  const { data: existingProfile } = await supabaseClient
     .from('profiles')
     .select('id')
     .eq('user_id', user.id)
@@ -52,13 +52,13 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
 
   let response;
   if (existingProfile) {
-    response = await supabase.from('profiles').update({
+    response = await supabaseClient.from('profiles').update({
       full_name,
       avatar_url,
       bio
     }).eq('user_id', user.id);
   } else {
-    response = await supabase.from('profiles').insert({
+    response = await supabaseClient.from('profiles').insert({
       user_id: user.id,
       full_name,
       avatar_url,
@@ -70,12 +70,12 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
     console.error('Profile update error:', response.error.message);
     document.getElementById('statusMessage').textContent = 'Error updating profile.';
   } else {
-    document.getElementById('avatar').src = avatar_url || 'https://via.placeholder.com/100';
+    document.getElementById('avatar').src = avatar_url || 'https://i.pravatar.cc/100';
     document.getElementById('statusMessage').textContent = 'Profile updated!';
   }
 });
 
 document.getElementById('logout').addEventListener('click', async () => {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   window.location.href = 'login.html';
 });
