@@ -1,54 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Your Profile</title>
-  <script type="module" src="./profile-script.js" defer></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
-    }
-    input, textarea {
-      display: block;
-      width: 100%;
-      margin-bottom: 15px;
-      padding: 8px;
-    }
-    button {
-      padding: 10px 20px;
-    }
-  </style>
 </head>
 <body>
   <h1>Your Profile</h1>
 
-  <img id="avatar" src="https://via.placeholder.com/100" width="100" height="100" alt="User Avatar">
+  <div>
+    <img id="avatar" src="https://ui-avatars.com/api/?name=User&background=random" width="100" />
+    <p><strong>User Avatar</strong></p>
+  </div>
 
-  <label>Full Name</label>
-  <input type="text" id="full_name" placeholder="Your name">
+  <form id="profile-form">
+    <div>
+      <label for="full-name">Full Name</label>
+      <input type="text" id="full-name" name="full-name" />
+    </div>
 
-  <label>Email</label>
-  <input type="text" id="email" disabled>
+    <div>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" readonly />
+    </div>
 
-  <label>Bio</label>
-  <textarea id="bio" placeholder="Tell us about yourself"></textarea>
+    <div>
+      <label for="bio">Bio</label>
+      <textarea id="bio" name="bio"></textarea>
+    </div>
 
-  <label>Avatar URL</label>
-  <input type="text" id="avatar_url" placeholder="Enter avatar URL">
+    <div>
+      <label for="avatar-url">Avatar URL</label>
+      <input type="text" id="avatar-url" name="avatar-url" placeholder="Enter avatar URL" />
+    </div>
 
-  <label>Skills</label>
-  <input type="text" id="skills" placeholder="e.g. video editing, ai, voiceovers">
+    <button type="submit">Save Profile</button>
+    <button type="button" id="logout-button">Logout</button>
+  </form>
 
-  <label>Collaboration Type</label>
-  <input type="text" id="collab_type" placeholder="e.g. sponsorship, co-creation">
-
-  <label>Platforms</label>
-  <input type="text" id="platforms" placeholder="e.g. TikTok, YouTube, Instagram">
-
-  <button id="save">Save Profile</button>
-  <button id="logout">Logout</button>
+  <script src="profile-script.js"></script>
 </body>
 </html>
