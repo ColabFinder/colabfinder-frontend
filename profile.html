@@ -1,107 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Your Profile</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>Your Profile</h1>
+  <div class="container">
+    <h1>Your Profile</h1>
 
-  <div>
-    <img id="avatar-img" src="https://placehold.co/80x80" alt="User Avatar" width="80" />
-    <p><strong>Full Name</strong></p>
-    <input type="text" id="full-name" placeholder="Enter full name" />
-    <p><strong>Email</strong></p>
-    <input type="email" id="email" disabled />
-    <p><strong>Avatar URL</strong></p>
-    <input type="text" id="avatar-url" placeholder="Enter avatar URL" />
-    <br>
+    <div class="profile-section">
+      <label>User Avatar</label><br />
+      <img id="avatar-preview" src="https://via.placeholder.com/100" width="100" height="100" alt="Avatar"/><br />
+      <input type="file" id="avatar-upload" accept="image/*" /><br /><br />
+    </div>
+
+    <div class="profile-section">
+      <label>Full Name</label><br />
+      <input type="text" id="full-name" placeholder="Enter full name" /><br /><br />
+    </div>
+
+    <div class="profile-section">
+      <label>Email</label><br />
+      <input type="email" id="email" disabled /><br /><br />
+    </div>
+
     <button id="save-btn">Save Profile</button>
     <button id="logout-btn">Logout</button>
+    <p id="status"></p>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // ✅ Declare supabase outside so it's in global scope
-    let supabase;
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    document.addEventListener("DOMContentLoaded", async () => {
-      // ✅ Initialize Supabase here
-      const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentUser;
 
-      const fullNameInput = document.getElementById('full-name');
-      const emailInput = document.getElementById('email');
-      const avatarUrlInput = document.getElementById('avatar-url');
-      const avatarImg = document.getElementById('avatar-img');
-      const saveBtn = document.getElementById('save-btn');
-      const logoutBtn = document.getElementById('logout-btn');
-
-      async function loadProfile() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          window.location.href = 'login.html';
-          return;
-        }
-
-        emailInput.value = user.email;
-
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .eq('user_id', user.id);
-
-        if (error) {
-          console.error('Error fetching profile:', error.message);
-          return;
-        }
-
-        if (!data || data.length === 0) {
-          await supabase.from('profiles').insert({
-            user_id: user.id,
-            full_name: '',
-            avatar_url: '',
-            updated_at: new Date(),
-            email: user.email
-          });
-          return loadProfile();
-        }
-
-        const profile = data[0];
-
-        fullNameInput.value = profile.full_name || '';
-        avatarUrlInput.value = profile.avatar_url || '';
-        avatarImg.src = profile.avatar_url || 'https://placehold.co/80x80';
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/login.html';
+        return;
       }
 
-      saveBtn.addEventListener('click', async () => {
-        const { data: { user } } = await supabase.auth.getUser();
+      currentUser = session.user;
 
-        const updates = {
-          user_id: user.id,
-          full_name: fullNameInput.value,
-          avatar_url: avatarUrlInput.value,
-          updated_at: new Date()
-        };
+      document.getElementById('email').value = currentUser.email;
 
-        const { error } = await supabase.from('profiles').upsert(updates);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('user_id', currentUser.id)
+        .single();
 
-        if (error) {
-          alert('Error saving profile: ' + error.message);
-        } else {
-          alert('Profile updated!');
-          avatarImg.src = avatarUrlInput.value || 'https://placehold.co/80x80';
-        }
-      });
+      if (profile) {
+        document.getElementById('full-name').value = profile.full_name || '';
+        document.getElementById('avatar-preview').src = profile.avatar_url || 'https://via.placeholder.com/100';
+      }
+    });
 
-      logoutBtn.addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-      });
+    document.getElementById('avatar-upload').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-      await loadProfile();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      let { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        alert('Upload failed!');
+        console.error(uploadError);
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      document.getElementById('avatar-preview').src = data.publicUrl;
+      document.getElementById('avatar-preview').setAttribute('data-url', data.publicUrl);
+    });
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const fullName = document.getElementById('full-name').value;
+      const avatarUrl = document.getElementById('avatar-preview').getAttribute('data-url') || document.getElementById('avatar-preview').src;
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: currentUser.id,
+          full_name: fullName,
+          avatar_url: avatarUrl
+        });
+
+      const status = document.getElementById('status');
+      if (error) {
+        status.textContent = 'Error saving profile.';
+        status.style.color = 'red';
+      } else {
+        status.textContent = 'Profile updated!';
+        status.style.color = 'green';
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/login.html';
     });
   </script>
 </body>
