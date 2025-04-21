@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Profile</title>
   <link rel="stylesheet" href="styles.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="profile-script.js"></script>
 </head>
 <body>
   <div class="container">
@@ -35,94 +37,5 @@
     <button id="logout-btn">Logout</button>
     <p id="status"></p>
   </div>
-
-  <!-- Load Supabase library FIRST -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Now safely initialize and run everything -->
-  <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/login.html';
-        return;
-      }
-
-      const user = session.user;
-      document.getElementById('email').value = user.email;
-
-      // Load profile info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url, bio')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profile) {
-        document.getElementById('full-name').value = profile.full_name || '';
-        document.getElementById('bio').value = profile.bio || '';
-        document.getElementById('avatar-preview').src = profile.avatar_url || 'https://placehold.co/100x100';
-        document.getElementById('avatar-preview').setAttribute('data-url', profile.avatar_url || '');
-      }
-
-      // Handle avatar upload
-      document.getElementById('avatar-upload').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, file, { upsert: true });
-
-        if (uploadError) {
-          alert('Avatar upload failed');
-          return;
-        }
-
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        document.getElementById('avatar-preview').src = data.publicUrl;
-        document.getElementById('avatar-preview').setAttribute('data-url', data.publicUrl);
-      });
-
-      // Handle save
-      document.getElementById('save-btn').addEventListener('click', async () => {
-        const fullName = document.getElementById('full-name').value;
-        const avatarUrl = document.getElementById('avatar-preview').getAttribute('data-url') || document.getElementById('avatar-preview').src;
-        const bio = document.getElementById('bio').value;
-
-        const { error } = await supabase
-          .from('profiles')
-          .upsert({
-            user_id: user.id,
-            full_name: fullName,
-            avatar_url: avatarUrl,
-            bio: bio
-          });
-
-        const status = document.getElementById('status');
-        if (error) {
-          status.textContent = 'Error saving profile.';
-          status.style.color = 'red';
-        } else {
-          status.textContent = 'Profile updated!';
-          status.style.color = 'green';
-        }
-      });
-
-      // Logout
-      document.getElementById('logout-btn').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = '/login.html';
-      });
-    });
-  </script>
 </body>
 </html>
