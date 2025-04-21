@@ -1,82 +1,41 @@
-// Supabase Initialization
-const { createClient } = supabase;
-const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co'; // Replace with your Supabase URL
-const supabaseKey = 'YOUR_SUPABASE_KEY'; // Replace with your Supabase anon key
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize Supabase client at the top!
+const supabase = supabase.createClient(
+  'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
+);
 
-// Check if user is logged in
-const user = supabase.auth.user();
-if (!user) {
-  window.location.href = "login.html"; // Redirect to login if no user is logged in
-}
+document.addEventListener("DOMContentLoaded", async () => {
+  const { data: { user } } = await supabase.auth.getUser();
 
-// Load user profile and collaborations
-async function loadProfile() {
-  try {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, bio, avatar_url, collab_type, skills, platforms')
-      .eq('user_id', user.id)
-      .single();
-
-    if (profileError) {
-      console.error("Profile load error:", profileError);
-      return;
-    }
-
-    // Update profile information on the page
-    document.getElementById('full-name').textContent = profile.full_name || 'N/A';
-    document.getElementById('email').textContent = profile.email || 'N/A';
-    document.getElementById('bio').textContent = profile.bio || 'N/A';
-    document.getElementById('profile-avatar').src = profile.avatar_url || 'https://via.placeholder.com/100';
-    
-    // Display collaboration data
-    loadCollaborations();
-
-  } catch (error) {
-    console.error("Error loading profile:", error);
+  if (!user) {
+    window.location.href = "login.html";
+    return;
   }
-}
 
-// Load collaborations
-async function loadCollaborations() {
-  try {
-    const { data: collaborations, error: collaborationsError } = await supabase
-      .from('collaborations')
-      .select('*')
-      .eq('user_id', user.id);
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("full_name, email, bio, avatar_url")
+    .eq("user_id", user.id)
+    .single();
 
-    if (collaborationsError) {
-      console.error("Error loading collaborations:", collaborationsError);
-      return;
-    }
-
-    const collaborationsList = document.getElementById('collaborations-list');
-    collaborationsList.innerHTML = ''; // Clear current list
-
-    if (collaborations.length === 0) {
-      collaborationsList.innerHTML = '<li>No collaborations found.</li>';
-    } else {
-      collaborations.forEach(collab => {
-        const listItem = document.createElement('li');
-        listItem.textContent = `Collaboration: ${collab.name} - Status: ${collab.status}`;
-        collaborationsList.appendChild(listItem);
-      });
-    }
-  } catch (error) {
-    console.error("Error loading collaborations:", error);
+  if (error) {
+    console.error("Profile load error:", error.message);
+    return;
   }
-}
 
-// Event listener for editing the profile
-document.getElementById('edit-profile-btn').addEventListener('click', () => {
-  window.location.href = "edit-profile.html"; // Redirect to edit profile page
+  document.getElementById("full-name").textContent = data.full_name || "N/A";
+  document.getElementById("email").textContent = user.email || "N/A";
+  document.getElementById("bio").textContent = data.bio || "N/A";
+
+  const avatarImg = document.getElementById("avatar");
+  avatarImg.src = data.avatar_url || "https://placehold.co/100x100";
+  avatarImg.onerror = () => {
+    avatarImg.src = "https://placehold.co/100x100";
+  };
 });
 
-// Event listener for adding collaboration
-document.getElementById('add-collaboration-btn').addEventListener('click', () => {
-  window.location.href = "add-collaboration.html"; // Redirect to add collaboration page
+// Logout handler
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  window.location.href = "login.html";
 });
-
-// Call loadProfile when the page loads
-document.addEventListener('DOMContentLoaded', loadProfile);
