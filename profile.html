@@ -3,117 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>User Profile</title>
+  <title>Profile | ColabFinder</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      padding: 40px;
+      padding: 2rem;
+      background-color: #f9f9f9;
     }
+
     .container {
       max-width: 500px;
-      margin: auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin: 0 auto;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-    input, textarea {
+
+    img {
+      border-radius: 50%;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="email"] {
       width: 100%;
-      margin-top: 10px;
-      margin-bottom: 20px;
-      padding: 10px;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
       border: 1px solid #ccc;
-      border-radius: 8px;
+      border-radius: 6px;
     }
+
     button {
-      background-color: #007bff;
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #0070f3;
       color: white;
-      padding: 12px 20px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
     }
+
     button:hover {
-      background-color: #0056b3;
-    }
-    img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      margin-bottom: 15px;
-    }
-    a {
-      color: #007bff;
-      text-decoration: none;
+      background-color: #0059c1;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <a href="dashboard.html">← Back to Dashboard</a>
     <h2>Your Profile</h2>
-    <img id="avatar" src="https://via.placeholder.com/80" alt="User Avatar" />
-    <p><strong>Email:</strong> <span id="email"></span></p>
+    <img id="avatar" src="https://placehold.co/80x80" alt="User Avatar" width="80" height="80"/>
 
-    <label for="display-name">Display Name:</label>
-    <input type="text" id="display-name" placeholder="Your name">
+    <form id="profile-form">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" />
 
-    <label for="bio">Bio:</label>
-    <textarea id="bio" rows="3" placeholder="Tell us about yourself"></textarea>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" disabled />
 
-    <label for="avatar-url">Avatar URL:</label>
-    <input type="text" id="avatar-url" placeholder="Image URL">
+      <button type="submit">Save Profile</button>
+    </form>
 
-    <button id="save-button">Save Changes</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
-  <script type="module">
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+  <!-- Load Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
+    );
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        window.location.href = 'login.html';
+    async function loadProfile() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/login.html';
         return;
       }
 
-      const email = user.email;
-      const metadata = user.user_metadata || {};
+      const user = session.user;
+      const { user_metadata } = user;
 
-      document.getElementById('email').textContent = email;
-      document.getElementById('display-name').value = metadata.full_name || '';
-      document.getElementById('bio').value = metadata.bio || '';
-      document.getElementById('avatar-url').value = metadata.avatar_url || '';
-      document.getElementById('avatar').src = metadata.avatar_url || 'https://via.placeholder.com/80';
+      document.getElementById('name').value = user_metadata.full_name || '';
+      document.getElementById('email').value = user.email;
+      document.getElementById('avatar').src = user_metadata.avatar_url || 'https://placehold.co/80x80';
+    }
 
-      document.getElementById('save-button').addEventListener('click', async () => {
-        const displayName = document.getElementById('display-name').value;
-        const bio = document.getElementById('bio').value;
-        const avatarUrl = document.getElementById('avatar-url').value;
+    loadProfile();
 
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: {
-            full_name: displayName,
-            bio: bio,
-            avatar_url: avatarUrl,
-          }
-        });
+    document.getElementById('profile-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const fullName = document.getElementById('name').value;
 
-        if (updateError) {
-          alert('Error saving profile: ' + updateError.message);
-        } else {
-          alert('Profile updated!');
-          document.getElementById('avatar').src = avatarUrl;
-        }
+      const { data, error } = await supabase.auth.updateUser({
+        data: { full_name: fullName }
       });
+
+      if (error) {
+        alert('Error updating profile: ' + error.message);
+      } else {
+        alert('Profile updated!');
+      }
     });
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = '/login.html';
+    }
   </script>
 </body>
 </html>
