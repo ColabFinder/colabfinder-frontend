@@ -3,121 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Profile | ColabFinder</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background-color: #f9f9f9;
-    }
-
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      background-color: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    img {
-      border-radius: 50%;
-      margin-bottom: 1rem;
-    }
-
-    label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-
-    input[type="text"],
-    input[type="email"] {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.25rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    button {
-      margin-top: 1.5rem;
-      padding: 0.75rem 1.5rem;
-      background-color: #0070f3;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #0059c1;
-    }
-  </style>
+  <title>Profile - ColabFinder</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
   <div class="container">
-    <h2>Your Profile</h2>
-    <img id="avatar" src="https://placehold.co/80x80" alt="User Avatar" width="80" height="80"/>
+    <h1>Your Profile</h1>
+    <img id="user-avatar" src="https://via.placeholder.com/80" alt="User Avatar" width="80" height="80" />
+    
+    <div>
+      <label for="full-name">Full Name</label>
+      <input type="text" id="full-name" placeholder="Your full name" />
+    </div>
+    
+    <div>
+      <label for="avatar-url">Avatar URL</label>
+      <input type="text" id="avatar-url" placeholder="https://example.com/avatar.png" />
+    </div>
 
-    <form id="profile-form">
-      <label for="name">Full Name</label>
-      <input type="text" id="name" name="name" />
-
+    <div>
       <label for="email">Email</label>
-      <input type="email" id="email" name="email" disabled />
+      <input type="email" id="email" disabled />
+    </div>
 
-      <button type="submit">Save Profile</button>
-    </form>
-
-    <button onclick="logout()">Logout</button>
+    <button id="save-profile">Save Profile</button>
+    <button id="logout">Logout</button>
   </div>
 
-  <!-- Load Supabase client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  <script>
-    const supabase = window.supabase.createClient(
-      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-    );
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const fullNameInput = document.getElementById('full-name');
+    const avatarUrlInput = document.getElementById('avatar-url');
+    const emailInput = document.getElementById('email');
+    const avatarImg = document.getElementById('user-avatar');
 
     async function loadProfile() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
         window.location.href = '/login.html';
         return;
       }
 
-      const user = session.user;
-      const { user_metadata } = user;
+      emailInput.value = user.email;
 
-      document.getElementById('name').value = user_metadata.full_name || '';
-      document.getElementById('email').value = user.email;
-      document.getElementById('avatar').src = user_metadata.avatar_url || 'https://placehold.co/80x80';
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        fullNameInput.value = data.full_name || '';
+        avatarUrlInput.value = data.avatar_url || '';
+        avatarImg.src = data.avatar_url || 'https://via.placeholder.com/80';
+      } else {
+        console.log('No profile found:', error?.message);
+      }
     }
 
-    loadProfile();
+    async function saveProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const updates = {
+        user_id: user.id,
+        full_name: fullNameInput.value,
+        avatar_url: avatarUrlInput.value,
+        email: user.email,
+        updated_at: new Date()
+      };
 
-    document.getElementById('profile-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const fullName = document.getElementById('name').value;
-
-      const { data, error } = await supabase.auth.updateUser({
-        data: { full_name: fullName }
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(updates, { onConflict: ['user_id'] });
 
       if (error) {
-        alert('Error updating profile: ' + error.message);
+        alert('Error saving profile: ' + error.message);
       } else {
-        alert('Profile updated!');
+        alert('Profile saved!');
+        avatarImg.src = avatarUrlInput.value || 'https://via.placeholder.com/80';
       }
-    });
+    }
 
-    async function logout() {
+    document.getElementById('save-profile').addEventListener('click', saveProfile);
+    document.getElementById('logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
       window.location.href = '/login.html';
-    }
+    });
+
+    loadProfile();
   </script>
 </body>
 </html>
