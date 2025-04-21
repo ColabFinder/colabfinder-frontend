@@ -3,59 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Your Profile</title>
+  <title>Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    img {
+      border-radius: 50%;
+      width: 100px;
+      height: 100px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .avatar {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Your Profile</h1>
+  <h2>Your Profile</h2>
 
-  <div>
-    <img id="avatar" src="https://ui-avatars.com/api/?name=User&background=random" width="100" />
-    <p><strong>User Avatar</strong></p>
-  </div>
-
-  <form id="profile-form">
-    <div>
-      <label for="full-name">Full Name</label>
-      <input type="text" id="full-name" name="full-name" />
-    </div>
-
-    <div>
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" readonly />
-    </div>
-
-    <div>
-      <label for="bio">Bio</label>
-      <textarea id="bio" name="bio"></textarea>
-    </div>
-
+  <div class="avatar">
+    <img id="user-avatar" src="https://via.placeholder.com/100" alt="User Avatar" onerror="this.src='https://via.placeholder.com/100';">
     <div>
       <label for="avatar-url">Avatar URL</label>
-      <input type="text" id="avatar-url" name="avatar-url" placeholder="Enter avatar URL" />
+      <input type="text" id="avatar-url" placeholder="Enter avatar URL" />
     </div>
+  </div>
 
-    <div>
-      <label for="collab-type">Collab Type</label>
-      <input type="text" id="collab-type" name="collab-type" />
-    </div>
+  <label for="full-name">Full Name</label>
+  <input type="text" id="full-name" />
 
-    <div>
-      <label for="skills">Skills</label>
-      <input type="text" id="skills" name="skills" />
-    </div>
+  <label for="email">Email</label>
+  <input type="email" id="email" disabled />
 
-    <div>
-      <label for="platforms">Platforms</label>
-      <input type="text" id="platforms" name="platforms" />
-    </div>
+  <label for="bio">Bio</label>
+  <textarea id="bio" rows="3"></textarea>
 
-    <button type="submit">Save Profile</button>
-    <button type="button" id="logout-button">Logout</button>
-  </form>
+  <label for="collab-type">Collab Type</label>
+  <input type="text" id="collab-type" placeholder="E.g., Paid, Shoutout, UGC"/>
 
-  <!-- ✅ IMPORTANT: Load Supabase client first -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- ✅ Then load your custom script -->
-  <script src="profile-script.js" defer></script>
+  <label for="skills">Skills</label>
+  <input type="text" id="skills" placeholder="E.g., Photography, Video Editing"/>
+
+  <label for="platforms">Platforms</label>
+  <input type="text" id="platforms" placeholder="E.g., Instagram, TikTok, YouTube"/>
+
+  <button id="save-profile">Save Profile</button>
+  <button id="logout">Logout</button>
+
+  <script type="module" src="./profile-script.js"></script>
 </body>
 </html>
