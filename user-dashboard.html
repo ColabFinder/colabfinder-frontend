@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Welcome to Your Dashboard</h1>
+            <nav>
+                <a href="profile.html">Profile</a>
+                <a href="collaborations.html">Collaborations</a>
+                <a href="logout.html">Logout</a>
+            </nav>
+        </header>
+
+        <section id="profile-section">
+            <h2>Your Profile</h2>
+            <div id="profile-info">
+                <img id="profile-avatar" src="https://via.placeholder.com/100" alt="Avatar" />
+                <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+                <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+                <button id="edit-profile-btn">Edit Profile</button>
+            </div>
+        </section>
+
+        <section id="collaborations-section">
+            <h2>Your Collaborations</h2>
+            <ul id="collaborations-list">
+                <!-- List of collaborations will appear here -->
+                <li>No collaborations found.</li>
+            </ul>
+            <button id="add-collaboration-btn">Add Collaboration</button>
+        </section>
+    </div>
+
+    <script src="profile-script.js"></script>
+</body>
+
+</html>
