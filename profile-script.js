@@ -15,10 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = session.user;
   const userId = user.id;
 
+  // Inputs
   const fullNameInput = document.getElementById('full-name');
   const emailInput = document.getElementById('email');
   const bioInput = document.getElementById('bio');
   const avatarInput = document.getElementById('avatar-url');
+  const collabInput = document.getElementById('collab-type');
+  const skillsInput = document.getElementById('skills');
+  const platformsInput = document.getElementById('platforms');
   const avatarImg = document.getElementById('avatar');
   const profileForm = document.getElementById('profile-form');
   const logoutButton = document.getElementById('logout-button');
@@ -29,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('full_name, bio, avatar_url')
+        .select('full_name, bio, avatar_url, collab_type, skills, platforms')
         .eq('user_id', userId)
         .single();
 
@@ -41,6 +45,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       fullNameInput.value = data.full_name || '';
       bioInput.value = data.bio || '';
       avatarInput.value = data.avatar_url || '';
+      collabInput.value = data.collab_type || '';
+      skillsInput.value = data.skills || '';
+      platformsInput.value = data.platforms || '';
       avatarImg.src = data.avatar_url || 'https://ui-avatars.com/api/?name=User&background=random';
     } catch (error) {
       console.error('Profile load error:', error);
@@ -53,6 +60,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const full_name = fullNameInput.value;
     const bio = bioInput.value;
     const avatar_url = avatarInput.value;
+    const collab_type = collabInput.value;
+    const skills = skillsInput.value;
+    const platforms = platformsInput.value;
 
     const { error } = await supabase
       .from('profiles')
@@ -60,7 +70,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         user_id: userId,
         full_name,
         bio,
-        avatar_url
+        avatar_url,
+        collab_type,
+        skills,
+        platforms
       });
 
     if (error) {
