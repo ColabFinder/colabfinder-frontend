@@ -7,68 +7,63 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px;
-      background: #f0f0f0;
+      background: #f2f2f2;
+      padding: 40px;
     }
     .container {
       max-width: 500px;
       margin: auto;
       background: #fff;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     input, textarea {
       width: 100%;
-      padding: 10px;
       margin-top: 10px;
       margin-bottom: 20px;
+      padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
     }
     button {
-      background: #007bff;
+      background-color: #007bff;
       color: white;
-      padding: 12px;
+      padding: 12px 20px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
     }
     button:hover {
-      background: #0056b3;
+      background-color: #0056b3;
     }
     img {
-      max-width: 100px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
-    .nav {
-      margin-bottom: 20px;
-    }
-    .nav a {
-      text-decoration: none;
+    a {
       color: #007bff;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="nav">
-      <a href="dashboard.html">&larr; Back to Dashboard</a>
-    </div>
+    <a href="dashboard.html">← Back to Dashboard</a>
     <h2>Your Profile</h2>
-    <div id="user-info">
-      <img id="avatar" src="" alt="User Avatar" />
-      <p><strong>Email:</strong> <span id="email"></span></p>
-    </div>
-    <label for="display-name">Display Name</label>
-    <input type="text" id="display-name" placeholder="Your name"/>
+    <img id="avatar" src="https://via.placeholder.com/80" alt="User Avatar" />
+    <p><strong>Email:</strong> <span id="email"></span></p>
 
-    <label for="bio">Bio</label>
-    <textarea id="bio" rows="4" placeholder="Tell us about yourself..."></textarea>
+    <label for="display-name">Display Name:</label>
+    <input type="text" id="display-name" placeholder="Your name">
 
-    <label for="avatar-url">Avatar URL</label>
-    <input type="text" id="avatar-url" placeholder="Paste image URL"/>
+    <label for="bio">Bio:</label>
+    <textarea id="bio" rows="3" placeholder="Tell us about yourself"></textarea>
+
+    <label for="avatar-url">Avatar URL:</label>
+    <input type="text" id="avatar-url" placeholder="Image URL">
 
     <button id="save-button">Save Changes</button>
   </div>
@@ -78,31 +73,32 @@
 
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
 
-      if (!user) {
-        window.location.href = '/login.html';
+      if (error || !user) {
+        window.location.href = 'login.html';
         return;
       }
 
       const email = user.email;
-      const meta = user.user_metadata || {};
+      const metadata = user.user_metadata || {};
 
       document.getElementById('email').textContent = email;
-      document.getElementById('display-name').value = meta.full_name || '';
-      document.getElementById('bio').value = meta.bio || '';
-      document.getElementById('avatar-url').value = meta.avatar_url || '';
-      document.getElementById('avatar').src = meta.avatar_url || 'https://via.placeholder.com/100';
+      document.getElementById('display-name').value = metadata.full_name || '';
+      document.getElementById('bio').value = metadata.bio || '';
+      document.getElementById('avatar-url').value = metadata.avatar_url || '';
+      document.getElementById('avatar').src = metadata.avatar_url || 'https://via.placeholder.com/80';
 
       document.getElementById('save-button').addEventListener('click', async () => {
         const displayName = document.getElementById('display-name').value;
         const bio = document.getElementById('bio').value;
         const avatarUrl = document.getElementById('avatar-url').value;
 
-        const { error } = await supabase.auth.updateUser({
+        const { error: updateError } = await supabase.auth.updateUser({
           data: {
             full_name: displayName,
             bio: bio,
@@ -110,8 +106,8 @@
           }
         });
 
-        if (error) {
-          alert('Error updating profile: ' + error.message);
+        if (updateError) {
+          alert('Error saving profile: ' + updateError.message);
         } else {
           alert('Profile updated!');
           document.getElementById('avatar').src = avatarUrl;
