@@ -3,39 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Profile</title>
+  <title>Your Profile</title>
   <link rel="stylesheet" href="styles.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Supabase JS (MUST LOAD BEFORE profile-script.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Your profile-script will run AFTER supabase is defined -->
   <script defer src="profile-script.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Your Profile</h1>
+    <h2>Your Profile</h2>
 
-    <div class="profile-section">
-      <label>User Avatar</label><br />
-      <img id="avatar-preview" src="https://placehold.co/100x100" width="100" height="100" alt="Avatar" /><br />
-      <input type="file" id="avatar-upload" accept="image/*" /><br /><br />
+    <div>
+      <label>User Avatar</label><br>
+      <img id="avatar-preview" src="https://placehold.co/100x100" width="100" alt="Avatar" />
     </div>
 
-    <div class="profile-section">
-      <label>Full Name</label><br />
-      <input type="text" id="full-name" placeholder="Enter full name" /><br /><br />
+    <div>
+      <label for="full-name">Full Name</label><br>
+      <input type="text" id="full-name" placeholder="Enter full name" />
     </div>
 
-    <div class="profile-section">
-      <label>Email</label><br />
-      <input type="email" id="email" disabled /><br /><br />
+    <div>
+      <label for="email">Email</label><br>
+      <input type="email" id="email" disabled />
     </div>
 
-    <div class="profile-section">
-      <label>Bio</label><br />
-      <textarea id="bio" placeholder="Enter your bio here..." rows="4" style="width: 100%;"></textarea><br /><br />
+    <div>
+      <label for="bio">Bio</label><br>
+      <textarea id="bio" rows="3" placeholder="Enter your bio"></textarea>
     </div>
 
-    <button id="save-btn">Save Profile</button>
-    <button id="logout-btn">Logout</button>
-    <p id="status"></p>
+    <div>
+      <label for="avatar-url">Avatar URL</label><br>
+      <input type="text" id="avatar-url" placeholder="Enter avatar URL" />
+    </div>
+
+    <button id="save-profile">Save Profile</button>
+    <button id="logout">Logout</button>
   </div>
 </body>
 </html>
