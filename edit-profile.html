@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Profile</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Edit Profile</h1>
+  </header>
+
+  <main>
+    <form id="edit-profile-form">
+      <label for="full-name">Full Name:</label>
+      <input type="text" id="full-name" name="full_name" required>
+
+      <label for="avatar-url">Avatar URL:</label>
+      <input type="url" id="avatar-url" name="avatar_url" required>
+
+      <label for="bio">Bio:</label>
+      <textarea id="bio" name="bio" rows="4" required></textarea>
+
+      <label for="collab-type">Collaboration Type:</label>
+      <input type="text" id="collab-type" name="collab_type" required>
+
+      <label for="skills">Skills (comma separated):</label>
+      <input type="text" id="skills" name="skills" required>
+
+      <label for="platforms">Platforms (comma separated):</label>
+      <input type="text" id="platforms" name="platforms" required>
+
+      <button type="submit">Save Profile</button>
+    </form>
+
+    <button id="back-btn">Back to Profile</button>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
+  <script src="edit-profile-script.js"></script>
+</body>
+</html>
