@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (data.length > 0) {
         const profile = data[0];
-        avatarImg.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`;
+        <img id="avatar" src="https://ui-avatars.com/api/?name=Default&background=random" width="100" />
         fullNameInput.value = profile.full_name || '';
         bioInput.value = profile.bio || '';
         avatarUrlInput.value = profile.avatar_url || '';
