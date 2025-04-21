@@ -34,10 +34,28 @@
       <input type="text" id="avatar-url" name="avatar-url" placeholder="Enter avatar URL" />
     </div>
 
+    <div>
+      <label for="collab-type">Collab Type</label>
+      <input type="text" id="collab-type" name="collab-type" />
+    </div>
+
+    <div>
+      <label for="skills">Skills</label>
+      <input type="text" id="skills" name="skills" />
+    </div>
+
+    <div>
+      <label for="platforms">Platforms</label>
+      <input type="text" id="platforms" name="platforms" />
+    </div>
+
     <button type="submit">Save Profile</button>
     <button type="button" id="logout-button">Logout</button>
   </form>
 
+  <!-- ✅ Load Supabase client FIRST -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- ✅ Then load your own script -->
   <script src="profile-script.js"></script>
 </body>
 </html>
