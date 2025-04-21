@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Edit Profile</title>
 </head>
 <body>
   <h1>Edit Your Profile</h1>
-
-  <form id="edit-profile-form">
-    <label>Full Name: <input type="text" id="full-name"/></label><br/>
-    <label>Bio: <textarea id="bio"></textarea></label><br/>
-    <label>Avatar URL: <input type="text" id="avatar-url"/></label><br/>
+  <form id="profile-form">
+    <label>Full Name: <input type="text" id="full-name"></label><br>
+    <label>Bio: <input type="text" id="bio"></label><br>
+    <label>Avatar URL: <input type="text" id="avatar-url"></label><br>
     <button type="submit">Save</button>
   </form>
+  <button id="back">Back to Dashboard</button>
 
-  <a href="dashboard.html">Back to Dashboard</a>
-
-  <script src="edit-profile-script.js"></script>
+  <script type="module" src="edit-profile-script.js"></script>
 </body>
 </html>
