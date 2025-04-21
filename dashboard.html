@@ -1,30 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>User Dashboard</title>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
   <nav>
-    <a href="dashboard.html">Profile</a>
+    <a href="profile.html">Profile</a>
     <a href="collaborations.html">Collaborations</a>
-    <button id="logout-btn">Logout</button>
+    <button id="logout">Logout</button>
   </nav>
 
-  <h2>Your Profile</h2>
-  <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar" />
-  <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
-  <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-  <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+  <section>
+    <h2>Your Profile</h2>
+    <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar">
+    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+    <a href="edit-profile.html">Edit Profile</a>
+  </section>
 
-  <a href="edit-profile.html">Edit Profile</a>
+  <section>
+    <h2>Your Collaborations</h2>
+    <div id="collaborations">Loading...</div>
+    <a href="#">Add Collaboration</a>
+  </section>
 
-  <h2>Your Collaborations</h2>
-  <div id="collaborations">Loading...</div>
-  <a href="add-collaboration.html">Add Collaboration</a>
-
-  <script src="profile-script.js"></script>
+  <script type="module" src="dashboard-script.js"></script>
 </body>
 </html>
