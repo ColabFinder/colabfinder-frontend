@@ -3,53 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - ColabFinder</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>User Dashboard</title>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
-  <div id="user-info"></div>
-  <button id="logout">Logout</button>
+  <nav>
+    <a href="dashboard.html">Profile</a>
+    <a href="collaborations.html">Collaborations</a>
+    <button id="logout-btn">Logout</button>
+  </nav>
 
-  <script>
-    // ✅ Your Supabase credentials
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+  <h2>Your Profile</h2>
+  <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar" />
+  <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+  <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+  <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
 
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  <a href="edit-profile.html">Edit Profile</a>
 
-    // ✅ Parse tokens from the URL on first load
-    window.addEventListener('DOMContentLoaded', async () => {
-      const { data, error } = await supabase.auth.getSession();
+  <h2>Your Collaborations</h2>
+  <div id="collaborations">Loading...</div>
+  <a href="add-collaboration.html">Add Collaboration</a>
 
-      if (!data.session) {
-        // Try to recover session from URL hash
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
-        if (exchangeError) {
-          console.error('Failed to exchange token:', exchangeError.message);
-        }
-      }
-
-      // ✅ Get the updated session/user after exchange
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-
-      if (user) {
-        document.getElementById('user-info').innerHTML = `
-          <p><strong>Name:</strong> ${user.user_metadata.full_name}</p>
-          <p><strong>Email:</strong> ${user.email}</p>
-          <img src="${user.user_metadata.avatar_url}" width="100" />
-        `;
-      } else {
-        document.getElementById('user-info').innerText = 'No user session found.';
-      }
-    });
-
-    // ✅ Logout
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
-    });
-  </script>
+  <script src="profile-script.js"></script>
 </body>
 </html>
