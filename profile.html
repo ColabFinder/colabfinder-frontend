@@ -23,12 +23,14 @@
   </div>
 
   <script>
+    // ✅ Declare supabase outside so it's in global scope
+    let supabase;
+
     document.addEventListener("DOMContentLoaded", async () => {
-      // ✅ Initialize Supabase client inside DOMContentLoaded
+      // ✅ Initialize Supabase here
       const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-
-      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const fullNameInput = document.getElementById('full-name');
       const emailInput = document.getElementById('email');
@@ -39,7 +41,6 @@
 
       async function loadProfile() {
         const { data: { user } } = await supabase.auth.getUser();
-
         if (!user) {
           window.location.href = 'login.html';
           return;
@@ -57,7 +58,7 @@
           return;
         }
 
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
           await supabase.from('profiles').insert({
             user_id: user.id,
             full_name: '',
@@ -100,7 +101,7 @@
         window.location.href = 'login.html';
       });
 
-      loadProfile();
+      await loadProfile();
     });
   </script>
 </body>
