@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     const { data, error, count } = await supabase
       .from("profiles")
-      .select("full_name, avatar_url, bio")
+      .select("id, full_name, avatar_url, bio")
       .eq("user_id", user.id);
 
     if (error) {
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         .from("profiles")
         .delete()
         .eq("user_id", user.id)
-        .neq("id", profile.id);
+        .neq("id", profile.id);  // Ensure we are using the correct profile ID
     } else {
       // Successful profile load (only one profile)
       const profile = data[0];
