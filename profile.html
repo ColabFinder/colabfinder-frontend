@@ -1,52 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Profile - ColabFinder</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="UTF-8">
+  <title>Your Profile</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Your Profile</h1>
-    <img id="user-avatar" src="https://via.placeholder.com/80" alt="User Avatar" width="80" height="80" />
-    
-    <div>
-      <label for="full-name">Full Name</label>
-      <input type="text" id="full-name" placeholder="Your full name" />
-    </div>
-    
-    <div>
-      <label for="avatar-url">Avatar URL</label>
-      <input type="text" id="avatar-url" placeholder="https://example.com/avatar.png" />
-    </div>
+  <h1>Your Profile</h1>
 
-    <div>
-      <label for="email">Email</label>
-      <input type="email" id="email" disabled />
-    </div>
-
-    <button id="save-profile">Save Profile</button>
-    <button id="logout">Logout</button>
+  <div>
+    <img id="avatar-img" src="https://placehold.co/80x80" alt="User Avatar" width="80" />
+    <p><strong>Full Name</strong></p>
+    <input type="text" id="full-name" placeholder="Enter full name" />
+    <p><strong>Email</strong></p>
+    <input type="email" id="email" disabled />
+    <p><strong>Avatar URL</strong></p>
+    <input type="text" id="avatar-url" placeholder="Enter avatar URL" />
+    <br>
+    <button id="save-btn">Save Profile</button>
+    <button id="logout-btn">Logout</button>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script>
+    // Initialize Supabase client
+    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const fullNameInput = document.getElementById('full-name');
-    const avatarUrlInput = document.getElementById('avatar-url');
     const emailInput = document.getElementById('email');
-    const avatarImg = document.getElementById('user-avatar');
+    const avatarUrlInput = document.getElementById('avatar-url');
+    const avatarImg = document.getElementById('avatar-img');
+    const saveBtn = document.getElementById('save-btn');
+    const logoutBtn = document.getElementById('logout-btn');
 
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        window.location.href = '/login.html';
+        window.location.href = 'login.html';
         return;
       }
 
@@ -55,44 +49,58 @@
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, avatar_url')
-        .eq('user_id', user.id)
-        .single();
+        .eq('user_id', user.id);
 
-      if (data) {
-        fullNameInput.value = data.full_name || '';
-        avatarUrlInput.value = data.avatar_url || '';
-        avatarImg.src = data.avatar_url || 'https://placehold.co/80x80';
-      } else {
-        console.log('No profile found:', error?.message);
+      if (error) {
+        console.error('Error fetching profile:', error.message);
+        return;
       }
+
+      if (data.length === 0) {
+        // No profile exists, create one
+        await supabase.from('profiles').insert({
+          user_id: user.id,
+          full_name: '',
+          avatar_url: '',
+          updated_at: new Date(),
+          email: user.email
+        });
+        console.log('Created new profile row.');
+        return loadProfile(); // Reload with new profile
+      }
+
+      const profile = data[0];
+
+      fullNameInput.value = profile.full_name || '';
+      avatarUrlInput.value = profile.avatar_url || '';
+      avatarImg.src = profile.avatar_url || 'https://placehold.co/80x80';
     }
 
-    async function saveProfile() {
+    saveBtn.addEventListener('click', async () => {
       const { data: { user } } = await supabase.auth.getUser();
+
       const updates = {
         user_id: user.id,
         full_name: fullNameInput.value,
         avatar_url: avatarUrlInput.value,
-        email: user.email,
         updated_at: new Date()
       };
 
       const { error } = await supabase
         .from('profiles')
-        .upsert(updates, { onConflict: ['user_id'] });
+        .upsert(updates);
 
       if (error) {
         alert('Error saving profile: ' + error.message);
       } else {
-        alert('Profile saved!');
-        avatarImg.src = avatarUrlInput.value || 'https://via.placeholder.com/80';
+        alert('Profile updated!');
+        avatarImg.src = avatarUrlInput.value || 'https://placehold.co/80x80';
       }
-    }
+    });
 
-    document.getElementById('save-profile').addEventListener('click', saveProfile);
-    document.getElementById('logout').addEventListener('click', async () => {
+    logoutBtn.addEventListener('click', async () => {
       await supabase.auth.signOut();
-      window.location.href = '/login.html';
+      window.location.href = 'login.html';
     });
 
     loadProfile();
