@@ -1,89 +1,71 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js'
+// Initialize Supabase
+const supabase = window.supabase;
 
-const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-const fullNameInput = document.getElementById('full_name')
-const emailInput = document.getElementById('email')
-const bioInput = document.getElementById('bio')
-const avatarInput = document.getElementById('avatar_url')
-const avatarImage = document.getElementById('avatar')
-const skillsInput = document.getElementById('skills')
-const collabTypeInput = document.getElementById('collab_type')
-const platformsInput = document.getElementById('platforms')
-
-const saveBtn = document.getElementById('save')
-const logoutBtn = document.getElementById('logout')
-
-let user = null
-
-async function loadProfile() {
-  const {
-    data: { session },
-    error
-  } = await supabase.auth.getSession()
-
-  if (!session?.user) {
-    window.location.href = '/login.html'
-    return
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) {
+    window.location.href = '/login.html';
+    return;
   }
 
-  user = session.user
-  emailInput.value = user.email
+  document.getElementById('email').textContent = user.email;
 
-  const { data, error: profileError } = await supabase
-    .from('profiles')
-    .select('full_name, bio, avatar_url, skills, collab_type, platforms')
-    .eq('user_id', user.id)
-    .single()
+  const avatarImg = document.getElementById('avatar');
+  const fullNameInput = document.getElementById('full-name');
+  const bioInput = document.getElementById('bio');
+  const avatarUrlInput = document.getElementById('avatar-url');
+  const collabTypeInput = document.getElementById('collab-type');
+  const platformsInput = document.getElementById('platforms');
 
-  if (profileError && profileError.code !== 'PGRST116') {
-    console.error('Profile load error:', profileError.message)
-    return
-  }
+  const loadProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, bio, collab_type, platforms')
+        .eq('user_id', user.id);
 
-  if (data) {
-    fullNameInput.value = data.full_name || ''
-    bioInput.value = data.bio || ''
-    avatarInput.value = data.avatar_url || ''
-    avatarImage.src = data.avatar_url || 'https://via.placeholder.com/100'
-    skillsInput.value = data.skills || ''
-    collabTypeInput.value = data.collab_type || ''
-    platformsInput.value = data.platforms || ''
-  }
-}
+      if (error) throw error;
 
-async function saveProfile() {
-  if (!user) return
+      if (data.length > 0) {
+        const profile = data[0];
+        avatarImg.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`;
+        fullNameInput.value = profile.full_name || '';
+        bioInput.value = profile.bio || '';
+        avatarUrlInput.value = profile.avatar_url || '';
+        collabTypeInput.value = profile.collab_type || '';
+        platformsInput.value = profile.platforms || '';
+      } else {
+        console.log('No profile found for user.');
+      }
+    } catch (error) {
+      console.error('Profile load error:', error.message);
+    }
+  };
 
-  const updates = {
-    user_id: user.id,
-    full_name: fullNameInput.value,
-    bio: bioInput.value,
-    avatar_url: avatarInput.value,
-    skills: skillsInput.value,
-    collab_type: collabTypeInput.value,
-    platforms: platformsInput.value,
-  }
+  document.getElementById('save-profile').addEventListener('click', async () => {
+    const updates = {
+      user_id: user.id,
+      full_name: fullNameInput.value,
+      avatar_url: avatarUrlInput.value,
+      bio: bioInput.value,
+      collab_type: collabTypeInput.value,
+      platforms: platformsInput.value,
+    };
 
-  const { error } = await supabase
-    .from('profiles')
-    .upsert(updates, { onConflict: ['user_id'] })
+    try {
+      const { error } = await supabase.from('profiles').upsert(updates);
+      if (error) throw error;
+      alert('Profile updated!');
+      await loadProfile();
+    } catch (error) {
+      console.error('Profile update error:', error.message);
+    }
+  });
 
-  if (error) {
-    console.error('Error updating profile:', error.message)
-    alert('Failed to save profile.')
-  } else {
-    alert('Profile saved!')
-    avatarImage.src = avatarInput.value || 'https://via.placeholder.com/100'
-  }
-}
+  document.getElementById('logout').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login.html';
+  });
 
-saveBtn.addEventListener('click', saveProfile)
-logoutBtn.addEventListener('click', async () => {
-  await supabase.auth.signOut()
-  window.location.href = '/login.html'
-})
-
-loadProfile()
+  loadProfile();
+});
