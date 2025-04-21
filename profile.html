@@ -1,28 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Your Profile</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="profile-script.js"></script>
+  <script type="module" src="./profile-script.js" defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, textarea {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 8px;
+    }
+    button {
+      padding: 10px 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Your Profile</h1>
-  <div>
-    <img id="avatar" src="https://i.pravatar.cc/100" alt="Avatar" width="100" height="100" />
-    <p><strong>Avatar</strong></p>
-    <p><strong>Full Name</strong></p>
-    <input type="text" id="full_name" placeholder="Enter full name" />
-    <p><strong>Email</strong></p>
-    <input type="text" id="email" disabled />
-    <p><strong>Bio</strong></p>
-    <textarea id="bio" placeholder="Enter bio"></textarea>
-    <p><strong>Avatar URL</strong></p>
-    <input type="text" id="avatar_url" placeholder="Enter avatar URL" />
-    <br /><br />
-    <button id="save">Save Profile</button>
-    <button id="logout">Logout</button>
-  </div>
-  <div id="status" style="color: green;"></div>
+
+  <img id="avatar" src="https://via.placeholder.com/100" width="100" height="100" alt="User Avatar">
+
+  <label>Full Name</label>
+  <input type="text" id="full_name" placeholder="Your name">
+
+  <label>Email</label>
+  <input type="text" id="email" disabled>
+
+  <label>Bio</label>
+  <textarea id="bio" placeholder="Tell us about yourself"></textarea>
+
+  <label>Avatar URL</label>
+  <input type="text" id="avatar_url" placeholder="Enter avatar URL">
+
+  <label>Skills</label>
+  <input type="text" id="skills" placeholder="e.g. video editing, ai, voiceovers">
+
+  <label>Collaboration Type</label>
+  <input type="text" id="collab_type" placeholder="e.g. sponsorship, co-creation">
+
+  <label>Platforms</label>
+  <input type="text" id="platforms" placeholder="e.g. TikTok, YouTube, Instagram">
+
+  <button id="save">Save Profile</button>
+  <button id="logout">Logout</button>
 </body>
 </html>
