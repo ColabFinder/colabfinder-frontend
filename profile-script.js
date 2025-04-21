@@ -1,43 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Your Profile</title>
-</head>
-<body>
-  <h1>Your Profile</h1>
+// ✅ Supabase Initialization
+const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-  <div>
-    <img id="avatar" src="https://ui-avatars.com/api/?name=User&background=random" width="100" />
-    <p><strong>User Avatar</strong></p>
-  </div>
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  <form id="profile-form">
-    <div>
-      <label for="full-name">Full Name</label>
-      <input type="text" id="full-name" name="full-name" />
-    </div>
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
 
-    <div>
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" readonly />
-    </div>
+  if (!session) {
+    window.location.href = '/login.html';
+    return;
+  }
 
-    <div>
-      <label for="bio">Bio</label>
-      <textarea id="bio" name="bio"></textarea>
-    </div>
+  const user = session.user;
+  const userId = user.id;
 
-    <div>
-      <label for="avatar-url">Avatar URL</label>
-      <input type="text" id="avatar-url" name="avatar-url" placeholder="Enter avatar URL" />
-    </div>
+  const fullNameInput = document.getElementById('full-name');
+  const emailInput = document.getElementById('email');
+  const bioInput = document.getElementById('bio');
+  const avatarInput = document.getElementById('avatar-url');
+  const avatarImg = document.getElementById('avatar');
+  const profileForm = document.getElementById('profile-form');
+  const logoutButton = document.getElementById('logout-button');
 
-    <button type="submit">Save Profile</button>
-    <button type="button" id="logout-button">Logout</button>
-  </form>
+  emailInput.value = user.email;
 
-  <script src="profile-script.js"></script>
-</body>
-</html>
+  async function loadProfile() {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, bio, avatar_url')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.warn('No profile found or error:', error.message);
+        return;
+      }
+
+      fullNameInput.value = data.full_name || '';
+      bioInput.value = data.bio || '';
+      avatarInput.value = data.avatar_url || '';
+      avatarImg.src = data.avatar_url || 'https://ui-avatars.com/api/?name=User&background=random';
+    } catch (error) {
+      console.error('Profile load error:', error);
+    }
+  }
+
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const full_name = fullNameInput.value;
+    const bio = bioInput.value;
+    const avatar_url = avatarInput.value;
+
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({
+        user_id: userId,
+        full_name,
+        bio,
+        avatar_url
+      });
+
+    if (error) {
+      alert('Error updating profile: ' + error.message);
+    } else {
+      alert('Profile updated!');
+      avatarImg.src = avatar_url || 'https://ui-avatars.com/api/?name=User&background=random';
+    }
+  });
+
+  logoutButton.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login.html';
+  });
+
+  loadProfile();
+});
