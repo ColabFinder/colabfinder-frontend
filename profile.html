@@ -23,87 +23,85 @@
   </div>
 
   <script>
-    // Initialize Supabase client
-    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    document.addEventListener("DOMContentLoaded", async () => {
+      // ✅ Initialize Supabase client inside DOMContentLoaded
+      const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const fullNameInput = document.getElementById('full-name');
-    const emailInput = document.getElementById('email');
-    const avatarUrlInput = document.getElementById('avatar-url');
-    const avatarImg = document.getElementById('avatar-img');
-    const saveBtn = document.getElementById('save-btn');
-    const logoutBtn = document.getElementById('logout-btn');
+      const fullNameInput = document.getElementById('full-name');
+      const emailInput = document.getElementById('email');
+      const avatarUrlInput = document.getElementById('avatar-url');
+      const avatarImg = document.getElementById('avatar-img');
+      const saveBtn = document.getElementById('save-btn');
+      const logoutBtn = document.getElementById('logout-btn');
 
-    async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
+      async function loadProfile() {
+        const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        emailInput.value = user.email;
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error fetching profile:', error.message);
+          return;
+        }
+
+        if (data.length === 0) {
+          await supabase.from('profiles').insert({
+            user_id: user.id,
+            full_name: '',
+            avatar_url: '',
+            updated_at: new Date(),
+            email: user.email
+          });
+          return loadProfile();
+        }
+
+        const profile = data[0];
+
+        fullNameInput.value = profile.full_name || '';
+        avatarUrlInput.value = profile.avatar_url || '';
+        avatarImg.src = profile.avatar_url || 'https://placehold.co/80x80';
       }
 
-      emailInput.value = user.email;
+      saveBtn.addEventListener('click', async () => {
+        const { data: { user } } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error fetching profile:', error.message);
-        return;
-      }
-
-      if (data.length === 0) {
-        // No profile exists, create one
-        await supabase.from('profiles').insert({
+        const updates = {
           user_id: user.id,
-          full_name: '',
-          avatar_url: '',
-          updated_at: new Date(),
-          email: user.email
-        });
-        console.log('Created new profile row.');
-        return loadProfile(); // Reload with new profile
-      }
+          full_name: fullNameInput.value,
+          avatar_url: avatarUrlInput.value,
+          updated_at: new Date()
+        };
 
-      const profile = data[0];
+        const { error } = await supabase.from('profiles').upsert(updates);
 
-      fullNameInput.value = profile.full_name || '';
-      avatarUrlInput.value = profile.avatar_url || '';
-      avatarImg.src = profile.avatar_url || 'https://placehold.co/80x80';
-    }
+        if (error) {
+          alert('Error saving profile: ' + error.message);
+        } else {
+          alert('Profile updated!');
+          avatarImg.src = avatarUrlInput.value || 'https://placehold.co/80x80';
+        }
+      });
 
-    saveBtn.addEventListener('click', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
 
-      const updates = {
-        user_id: user.id,
-        full_name: fullNameInput.value,
-        avatar_url: avatarUrlInput.value,
-        updated_at: new Date()
-      };
-
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(updates);
-
-      if (error) {
-        alert('Error saving profile: ' + error.message);
-      } else {
-        alert('Profile updated!');
-        avatarImg.src = avatarUrlInput.value || 'https://placehold.co/80x80';
-      }
+      loadProfile();
     });
-
-    logoutBtn.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
-    });
-
-    loadProfile();
   </script>
 </body>
 </html>
