@@ -29,16 +29,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Handle no profile case (if data is empty or null)
     if (!data || data.length === 0) {
       console.log("No profile found for user.");
-      // Optionally, create a new profile or show a message
       document.getElementById("full-name").value = "";
       document.getElementById("avatar-url").value = "";
       document.getElementById("bio").value = "";
     } else if (data.length > 1) {
       // Handle multiple profiles for the same user (this shouldn't normally happen)
-      console.log("Multiple profiles found. Expected only one.");
-      // You might need to deduplicate the data or manually handle this case.
+      console.log("Multiple profiles found. Taking the first profile.");
+      // You can take the first profile (assuming only one is correct)
+      const profile = data[0];
+      document.getElementById("full-name").value = profile.full_name || "";
+      document.getElementById("avatar-url").value = profile.avatar_url || "";
+      document.getElementById("bio").value = profile.bio || "";
+
+      if (profile.avatar_url) {
+        document.getElementById("avatar-preview").src = profile.avatar_url;
+      }
+
+      // Optionally, you could delete the duplicate profiles or handle them appropriately
+      // Example: deleting all but the first profile
+      await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", user.id)
+        .neq("id", profile.id);
     } else {
-      // Successful profile load
+      // Successful profile load (only one profile)
       const profile = data[0];
       document.getElementById("full-name").value = profile.full_name || "";
       document.getElementById("avatar-url").value = profile.avatar_url || "";
