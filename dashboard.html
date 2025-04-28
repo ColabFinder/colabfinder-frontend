@@ -1,39 +1,30 @@
-<!-- Full updated dashboard.html -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Dashboard - ColabFinder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Welcome to Your Dashboard</h1>
-    <nav>
-      <a href="profile.html">Profile</a> |
-      <a href="user-dashboard.html">Collaborations</a> |
-      <a href="#" id="logout">Logout</a>
-    </nav>
+  <h1>Welcome to Your Dashboard</h1>
+  <nav>
+    <a href="profile.html">Profile</a> |
+    <a href="collaborations.html">Collaborations</a> |
+    <a href="#" id="logout">Logout</a>
+  </nav>
 
-    <section id="user-profile">
-      <h2>Your Profile</h2>
-      <img id="user-avatar" src="https://placehold.co/100x100" alt="User Avatar" style="border-radius:50%; width:100px; height:100px;">
-      <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
-      <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-      <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
-      <a href="edit-profile.html">Edit Profile</a>
-    </section>
+  <h2>Your Profile</h2>
+  <img id="avatar" src="https://via.placeholder.com/100" alt="User Avatar" width="100">
+  <p>Full Name: <span id="full-name">Loading...</span></p>
+  <p>Email: <span id="email">Loading...</span></p>
+  <p>Bio: <span id="bio">Loading...</span></p>
+  <a href="edit-profile.html">Edit Profile</a>
 
-    <section id="user-collaborations">
-      <h2>Your Collaborations</h2>
-      <div id="collaborations-list">Loading...</div>
-      <a href="#">Add Collaboration</a>
-    </section>
-  </div>
+  <h2>Your Collaborations</h2>
+  <div id="collaborations-list">Loading...</div>
+  <a href="add-collaboration.html">Add Collaboration</a>
 
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Your custom script -->
   <script src="dashboard-script.js"></script>
 </body>
 </html>
