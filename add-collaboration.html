@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add Collaboration - ColabFinder</title>
+</head>
+<body>
+  <h1>Add New Collaboration</h1>
+
+  <div>
+    <label for="title">Title:</label><br>
+    <input type="text" id="title" placeholder="Enter collaboration title">
+  </div>
+
+  <div>
+    <label for="description">Description:</label><br>
+    <textarea id="description" placeholder="Enter collaboration description"></textarea>
+  </div>
+
+  <button onclick="saveCollaboration()">Save Collaboration</button>
+  <button onclick="window.location.href='dashboard.html'">Cancel</button>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // Initialize Supabase
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function saveCollaboration() {
+      const title = document.getElementById('title').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const session = await supabase.auth.getSession();
+      const user = session.data.session?.user;
+
+      if (!user) {
+        alert('User not logged in!');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!title || !description) {
+        alert('Please fill in both fields.');
+        return;
+      }
+
+      const { error } = await supabase.from('collaborations').insert([
+        {
+          user_id: user.id,
+          title: title,
+          description: description
+        }
+      ]);
+
+      if (error) {
+        console.error('Error saving collaboration:', error.message);
+        alert('Error saving collaboration.');
+      } else {
+        alert('Collaboration added successfully!');
+        window.location.href = 'dashboard.html';
+      }
+    }
+  </script>
+
+</body>
+</html>
