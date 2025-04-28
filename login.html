@@ -1,40 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Login - ColabFinder</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-  <!-- Load Supabase library FIRST -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-  <h1>Welcome to ColabFinder</h1>
-  <button id="login-google">Login with Google</button>
-
-  <!-- Put ALL custom JavaScript AFTER Supabase is loaded -->
-  <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-      // ✅ Handle login click
-      document.getElementById('login-google').addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html'
-          }
-        });
-
-        if (error) {
-          console.error('Login error:', error.message);
-          alert('Login failed. Please try again.');
+    // ✅ Handle login click
+    document.getElementById('login-google').addEventListener('click', async () => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html'
         }
       });
 
-      // ✅ After login, exchange code for session
+      if (error) {
+        console.error('Login error:', error.message);
+        alert('Login failed. Please try again.');
+      }
+    });
+
+    // ✅ Only exchange session if URL has code param
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code) {
       const { data, error } = await supabase.auth.exchangeCodeForSession();
       if (error) {
         console.error('Session exchange error:', error.message);
@@ -42,7 +31,6 @@
         console.log('✅ Logged in successfully!');
         window.location.href = 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html';
       }
-    });
-  </script>
-</body>
-</html>
+    }
+  });
+</script>
