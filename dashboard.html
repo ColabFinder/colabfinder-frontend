@@ -2,55 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - ColabFinder</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
   <nav>
-    <a href="dashboard.html">Profile</a> | 
-    <a href="collaborations.html">Collaborations</a> | 
-    <button onclick="logout()">Logout</button>
+    <a href="profile.html">Profile</a> | 
+    <a href="dashboard.html">Collaborations</a> | 
+    <a href="#" onclick="logout()">Logout</a>
   </nav>
 
   <h2>Your Profile</h2>
-  <div id="profile">
-    <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar" width="100" height="100" onerror="this.src='https://placehold.co/100x100'">
-    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
-    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
-    <button onclick="window.location.href='edit-profile.html'">Edit Profile</button>
-  </div>
+  <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar" width="100">
+  <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+  <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+  <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+  <button onclick="window.location.href='edit-profile.html'">Edit Profile</button>
 
   <h2>Your Collaborations</h2>
-  <div id="collaborations">
-    Loading...
-  </div>
+  <ul id="collaborations-list">
+    <li>Loading...</li>
+  </ul>
   <button onclick="window.location.href='add-collaboration.html'">Add Collaboration</button>
 
-  <!-- Load Supabase client library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- MAIN LOGIC MUST BE TYPE="module" -->
-  <script type="module">
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  <script>
+    const supabase = window.supabase = createClient(
+      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
+    );
 
     async function loadDashboard() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session || !session.user) {
+        console.error('No active session, redirecting to login...');
         window.location.href = 'login.html';
         return;
       }
 
-      loadProfile(user.id);
-      loadCollaborations(user.id);
+      const user = session.user;
+      await loadProfile(user.id, user.email);
+      await loadCollaborations(user.id);
     }
 
-    async function loadProfile(userId) {
+    async function loadProfile(userId, email) {
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, avatar_url, bio')
@@ -65,7 +61,7 @@
       document.getElementById('full-name').textContent = data.full_name || '';
       document.getElementById('bio').textContent = data.bio || '';
       document.getElementById('avatar').src = data.avatar_url || 'https://placehold.co/100x100';
-      document.getElementById('email').textContent = session.user.email;
+      document.getElementById('email').textContent = email || 'No Email';
     }
 
     async function loadCollaborations(userId) {
@@ -74,28 +70,20 @@
         .select('*')
         .eq('user_id', userId);
 
-      const collaborationsDiv = document.getElementById('collaborations');
+      const list = document.getElementById('collaborations-list');
+      list.innerHTML = '';
 
-      if (error) {
-        console.error('Error loading collaborations:', error.message);
-        collaborationsDiv.textContent = 'Error loading collaborations.';
+      if (error || !data.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No collaborations found.';
+        list.appendChild(li);
         return;
       }
 
-      if (!data.length) {
-        collaborationsDiv.textContent = 'No collaborations found.';
-        return;
-      }
-
-      collaborationsDiv.innerHTML = '';
       data.forEach(collab => {
-        const collabDiv = document.createElement('div');
-        collabDiv.innerHTML = `
-          <h4>${collab.title}</h4>
-          <p>${collab.description}</p>
-          <hr>
-        `;
-        collaborationsDiv.appendChild(collabDiv);
+        const li = document.createElement('li');
+        li.textContent = collab.title || 'Untitled Collaboration';
+        list.appendChild(li);
       });
     }
 
@@ -104,8 +92,7 @@
       window.location.href = 'login.html';
     }
 
-    loadDashboard();
+    document.addEventListener('DOMContentLoaded', loadDashboard);
   </script>
-
 </body>
 </html>
