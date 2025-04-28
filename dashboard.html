@@ -28,84 +28,83 @@
   </div>
   <button onclick="window.location.href='add-collaboration.html'">Add Collaboration</button>
 
-  <!-- Supabase Client must load first -->
+  <!-- Load Supabase client library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  <!-- MAIN LOGIC MUST BE TYPE="module" -->
+  <script type="module">
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-      async function loadDashboard() {
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
+    async function loadDashboard() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-        if (!user) {
-          window.location.href = 'login.html';
-          return;
-        }
-
-        loadProfile(user.id);
-        loadCollaborations(user.id);
-      }
-
-      async function loadProfile(userId) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url, bio')
-          .eq('user_id', userId)
-          .single();
-
-        if (error) {
-          console.error('Error loading profile:', error.message);
-          return;
-        }
-
-        document.getElementById('full-name').textContent = data.full_name || '';
-        document.getElementById('bio').textContent = data.bio || '';
-        document.getElementById('avatar').src = data.avatar_url || 'https://placehold.co/100x100';
-        document.getElementById('email').textContent = session.user.email;
-      }
-
-      async function loadCollaborations(userId) {
-        const { data, error } = await supabase
-          .from('collaborations')
-          .select('*')
-          .eq('user_id', userId);
-
-        const collaborationsDiv = document.getElementById('collaborations');
-
-        if (error) {
-          console.error('Error loading collaborations:', error.message);
-          collaborationsDiv.textContent = 'Error loading collaborations.';
-          return;
-        }
-
-        if (!data.length) {
-          collaborationsDiv.textContent = 'No collaborations found.';
-          return;
-        }
-
-        collaborationsDiv.innerHTML = '';
-        data.forEach(collab => {
-          const collabDiv = document.createElement('div');
-          collabDiv.innerHTML = `
-            <h4>${collab.title}</h4>
-            <p>${collab.description}</p>
-            <hr>
-          `;
-          collaborationsDiv.appendChild(collabDiv);
-        });
-      }
-
-      async function logout() {
-        await supabase.auth.signOut();
+      if (!user) {
         window.location.href = 'login.html';
+        return;
       }
 
-      loadDashboard();
-    });
+      loadProfile(user.id);
+      loadCollaborations(user.id);
+    }
+
+    async function loadProfile(userId) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, bio')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error loading profile:', error.message);
+        return;
+      }
+
+      document.getElementById('full-name').textContent = data.full_name || '';
+      document.getElementById('bio').textContent = data.bio || '';
+      document.getElementById('avatar').src = data.avatar_url || 'https://placehold.co/100x100';
+      document.getElementById('email').textContent = session.user.email;
+    }
+
+    async function loadCollaborations(userId) {
+      const { data, error } = await supabase
+        .from('collaborations')
+        .select('*')
+        .eq('user_id', userId);
+
+      const collaborationsDiv = document.getElementById('collaborations');
+
+      if (error) {
+        console.error('Error loading collaborations:', error.message);
+        collaborationsDiv.textContent = 'Error loading collaborations.';
+        return;
+      }
+
+      if (!data.length) {
+        collaborationsDiv.textContent = 'No collaborations found.';
+        return;
+      }
+
+      collaborationsDiv.innerHTML = '';
+      data.forEach(collab => {
+        const collabDiv = document.createElement('div');
+        collabDiv.innerHTML = `
+          <h4>${collab.title}</h4>
+          <p>${collab.description}</p>
+          <hr>
+        `;
+        collaborationsDiv.appendChild(collabDiv);
+      });
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'login.html';
+    }
+
+    loadDashboard();
   </script>
 
 </body>
