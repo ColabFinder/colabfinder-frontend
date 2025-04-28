@@ -2,29 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard - ColabFinder</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
   <nav>
-    <a href="profile.html">Profile</a> |
-    <a href="collaborations.html">Collaborations</a> |
-    <a href="#" id="logout">Logout</a>
+    <a href="dashboard.html">Profile</a> | 
+    <a href="collaborations.html">Collaborations</a> | 
+    <button onclick="logout()">Logout</button>
   </nav>
 
   <h2>Your Profile</h2>
-  <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar" width="100">
-  <p>Full Name: <span id="full-name">Loading...</span></p>
-  <p>Email: <span id="email">Loading...</span></p>
-  <p>Bio: <span id="bio">Loading...</span></p>
-  <a href="edit-profile.html">Edit Profile</a>
+  <div id="profile">
+    <img id="avatar" src="" alt="User Avatar" width="100" height="100" onerror="this.src='https://via.placeholder.com/100'">
+    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+    <button onclick="window.location.href='edit-profile.html'">Edit Profile</button>
+  </div>
 
   <h2>Your Collaborations</h2>
-  <div id="collaborations-list">Loading...</div>
-  <a href="add-collaboration.html">Add Collaboration</a>
+  <div id="collaborations">
+    Loading...
+  </div>
+  <button onclick="window.location.href='add-collaboration.html'">Add Collaboration</button>
 
-  <script src="dashboard-script.js"></script>
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function loadDashboard() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      loadProfile(user.id);
+      loadCollaborations(user.id);
+    }
+
+    async function loadProfile(userId) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, bio')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error loading profile:', error.message);
+        return;
+      }
+
+      document.getElementById('full-name').textContent = data.full_name || '';
+      document.getElementById('bio').textContent = data.bio || '';
+      document.getElementById('avatar').src = data.avatar_url || 'https://via.placeholder.com/100';
+      document.getElementById('email').textContent = session.user.email;
+    }
+
+    async function loadCollaborations(userId) {
+      const { data, error } = await supabase
+        .from('collaborations')
+        .select('*')
+        .eq('user_id', userId);
+
+      const collaborationsDiv = document.getElementById('collaborations');
+
+      if (error) {
+        console.error('Error loading collaborations:', error.message);
+        collaborationsDiv.textContent = 'Error loading collaborations.';
+        return;
+      }
+
+      if (data.length === 0) {
+        collaborationsDiv.textContent = 'No collaborations found.';
+        return;
+      }
+
+      collaborationsDiv.innerHTML = '';
+      data.forEach(collab => {
+        const collabDiv = document.createElement('div');
+        collabDiv.innerHTML = `
+          <h4>${collab.title}</h4>
+          <p>${collab.description}</p>
+          <hr>
+        `;
+        collaborationsDiv.appendChild(collabDiv);
+      });
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'login.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+  </script>
+
 </body>
 </html>
