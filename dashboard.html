@@ -1,98 +1,110 @@
-<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
   <nav>
-    <a href="profile.html">Profile</a> | 
-    <a href="dashboard.html">Collaborations</a> | 
+    <a href="profile.html">Profile</a> |
+    <a href="dashboard.html">Collaborations</a> |
     <a href="#" onclick="logout()">Logout</a>
   </nav>
 
-  <h2>Your Profile</h2>
-  <img src="https://via.placeholder.com/100" id="avatar" alt="User Avatar" /><br />
-  <strong>Full Name:</strong> <span id="full-name">Loading...</span><br />
-  <strong>Email:</strong> <span id="email">Loading...</span><br />
-  <strong>Bio:</strong> <span id="bio">Loading...</span><br />
-  <a href="profile.html">Edit Profile</a>
+  <section>
+    <h2>Your Profile</h2>
+    <img id="avatar" src="" alt="User Avatar" width="100" height="100" />
+    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+    <a href="edit-profile.html">Edit Profile</a>
+  </section>
 
-  <h2>Your Collaborations</h2>
-  <div id="collaborations">Loading...</div>
-  <br />
-  <a href="add-collaboration.html">Add Collaboration</a>
+  <section>
+    <h2>Your Collaborations</h2>
+    <div id="collaborations-list">Loading...</div>
+    <br/>
+    <a href="add-collaboration.html">Add Collaboration</a>
+  </section>
 
+  <!-- Load Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
     async function loadDashboard() {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        alert('Please login first');
-        window.location.href = '/login.html';
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
         return;
       }
 
       const user = session.user;
       const userId = user.id;
 
-      // Load Profile Info
-      const { data: profileData, error: profileError } = await supabase
+      loadProfile(userId);
+      loadCollaborations(userId);
+    }
+
+    async function loadProfile(userId) {
+      const { data, error } = await supabase
         .from('profiles')
         .select('full_name, email, bio, avatar_url')
         .eq('user_id', userId)
         .single();
 
-      if (profileData) {
-        document.getElementById('full-name').innerText = profileData.full_name || 'No name';
-        document.getElementById('email').innerText = profileData.email || 'No email';
-        document.getElementById('bio').innerText = profileData.bio || 'No bio';
-        document.getElementById('avatar').src = profileData.avatar_url || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
-      } else {
-        console.error('Profile loading error', profileError);
+      if (error) {
+        console.error('Error loading profile:', error);
+        return;
       }
 
-      // Load Collaborations
-      const { data: collaborations, error: collabError } = await supabase
+      document.getElementById('full-name').textContent = data.full_name || 'N/A';
+      document.getElementById('email').textContent = data.email || 'N/A';
+      document.getElementById('bio').textContent = data.bio || 'N/A';
+      document.getElementById('avatar').src = data.avatar_url || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+    }
+
+    async function loadCollaborations(userId) {
+      const { data, error } = await supabase
         .from('collaborations')
-        .select('id, title, description, type')
+        .select('*')
         .eq('user_id', userId);
 
-      const collabContainer = document.getElementById('collaborations');
-      collabContainer.innerHTML = '';
+      const list = document.getElementById('collaborations-list');
+      list.innerHTML = '';
 
-      if (collabError) {
-        collabContainer.innerText = 'Error loading collaborations.';
-        console.error('Collaboration error', collabError);
+      if (error) {
+        console.error('Error loading collaborations:', error);
+        list.textContent = 'Failed to load collaborations.';
         return;
       }
 
-      if (collaborations.length === 0) {
-        collabContainer.innerText = 'No collaborations found.';
+      if (data.length === 0) {
+        list.textContent = 'No collaborations found.';
         return;
       }
 
-      collaborations.forEach(collab => {
-        const div = document.createElement('div');
-        div.innerHTML = `<strong>${collab.title}</strong><br>${collab.description}<br><em>${collab.type}</em><hr>`;
-        collabContainer.appendChild(div);
+      data.forEach(collab => {
+        const item = document.createElement('div');
+        item.innerHTML = `
+          <h3>${collab.title}</h3>
+          <p>${collab.description}</p>
+          <p><strong>Type:</strong> ${collab.type}</p>
+        `;
+        list.appendChild(item);
       });
     }
 
     async function logout() {
       await supabase.auth.signOut();
-      window.location.href = '/login.html';
+      window.location.href = 'login.html';
     }
 
-    loadDashboard();
+    document.addEventListener('DOMContentLoaded', loadDashboard);
   </script>
 </body>
 </html>
