@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Collaboration</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Edit Collaboration</h1>
+
+  <form id="edit-collaboration-form">
+    <label>Title:</label><br>
+    <input type="text" id="title" required><br><br>
+
+    <label>Description:</label><br>
+    <textarea id="description" required></textarea><br><br>
+
+    <label>Type (e.g., Paid, Content Swap, Giveaway):</label><br>
+    <input type="text" id="type" required><br><br>
+
+    <button type="submit">Save Changes</button>
+  </form>
+
+  <br>
+  <a href="dashboard.html">← Back to Dashboard</a>
+
+  <script>
+    // Initialize Supabase
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const collaborationId = urlParams.get('id');
+
+    if (!collaborationId) {
+      alert('No collaboration ID found.');
+      window.location.href = 'dashboard.html';
+    }
+
+    async function loadCollaboration() {
+      const { data, error } = await supabase
+        .from('collaborations')
+        .select('*')
+        .eq('id', collaborationId)
+        .single();
+
+      if (error) {
+        console.error('Error loading collaboration:', error);
+        alert('Failed to load collaboration.');
+        return;
+      }
+
+      document.getElementById('title').value = data.title || '';
+      document.getElementById('description').value = data.description || '';
+      document.getElementById('type').value = data.type || '';
+    }
+
+    document.getElementById('edit-collaboration-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const type = document.getElementById('type').value;
+
+      const { error } = await supabase
+        .from('collaborations')
+        .update({ title, description, type })
+        .eq('id', collaborationId);
+
+      if (error) {
+        console.error('Error updating collaboration:', error);
+        alert('Failed to update collaboration.');
+      } else {
+        alert('Collaboration updated successfully!');
+        window.location.href = 'dashboard.html';
+      }
+    });
+
+    loadCollaboration();
+  </script>
+</body>
+</html>
