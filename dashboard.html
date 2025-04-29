@@ -1,98 +1,95 @@
+<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - ColabFinder</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
   <nav>
-    <a href="profile.html">Profile</a> | 
-    <a href="dashboard.html">Collaborations</a> | 
+    <a href="profile.html">Profile</a> |
+    <a href="dashboard.html">Collaborations</a> |
     <a href="#" onclick="logout()">Logout</a>
   </nav>
 
   <h2>Your Profile</h2>
-  <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar" width="100">
-  <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
-  <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-  <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
-  <button onclick="window.location.href='edit-profile.html'">Edit Profile</button>
+  <div>
+    <img id="user-avatar" src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png" alt="User Avatar" width="100" height="100" />
+    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+    <a href="edit-profile.html">Edit Profile</a>
+  </div>
 
   <h2>Your Collaborations</h2>
-  <ul id="collaborations-list">
-    <li>Loading...</li>
-  </ul>
-  <button onclick="window.location.href='add-collaboration.html'">Add Collaboration</button>
+  <div id="collaborations-list">Loading...</div>
+  <br />
+  <a href="add-collaboration.html">Add Collaboration</a>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = window.supabase.createClient(
-      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-    );
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     async function loadDashboard() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session || !session.user) {
-        console.error('No active session, redirecting to login...');
-        window.location.href = 'login.html';
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        console.error('No session found:', sessionError);
+        window.location.href = '/login.html';
         return;
       }
 
       const user = session.user;
-      await loadProfile(user.id, user.email);
-      await loadCollaborations(user.id);
-    }
+      const userId = user.id;
 
-    async function loadProfile(userId, email) {
-      const { data, error } = await supabase
+      // Load profile
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url, bio')
+        .select('full_name, email, bio, avatar_url')
         .eq('user_id', userId)
         .single();
 
-      if (error) {
-        console.error('Error loading profile:', error.message);
-        return;
+      if (profileData) {
+        document.getElementById('full-name').innerText = profileData.full_name || 'Not set';
+        document.getElementById('email').innerText = profileData.email || 'Not set';
+        document.getElementById('bio').innerText = profileData.bio || 'Not set';
+        document.getElementById('user-avatar').src = profileData.avatar_url || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
       }
 
-      document.getElementById('full-name').textContent = data.full_name || '';
-      document.getElementById('bio').textContent = data.bio || '';
-      document.getElementById('avatar').src = data.avatar_url || 'https://placehold.co/100x100';
-      document.getElementById('email').textContent = email || 'No Email';
-    }
-
-    async function loadCollaborations(userId) {
-      const { data, error } = await supabase
+      // Load collaborations
+      const { data: collaborations, error: collaborationsError } = await supabase
         .from('collaborations')
         .select('*')
         .eq('user_id', userId);
 
-      const list = document.getElementById('collaborations-list');
-      list.innerHTML = '';
+      const collaborationsList = document.getElementById('collaborations-list');
+      collaborationsList.innerHTML = '';
 
-      if (error || !data.length) {
-        const li = document.createElement('li');
-        li.textContent = 'No collaborations found.';
-        list.appendChild(li);
-        return;
+      if (collaborations && collaborations.length > 0) {
+        collaborations.forEach(collab => {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <h3>${collab.title}</h3>
+            <p>${collab.description}</p>
+            <p><strong>Type:</strong> ${collab.type}</p>
+          `;
+          collaborationsList.appendChild(div);
+        });
+      } else {
+        collaborationsList.innerHTML = 'No collaborations found.';
       }
-
-      data.forEach(collab => {
-        const li = document.createElement('li');
-        li.textContent = collab.title || 'Untitled Collaboration';
-        list.appendChild(li);
-      });
     }
 
     async function logout() {
       await supabase.auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = '/login.html';
     }
 
-    document.addEventListener('DOMContentLoaded', loadDashboard);
+    loadDashboard();
   </script>
 </body>
 </html>
