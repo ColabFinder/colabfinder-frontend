@@ -21,26 +21,31 @@
   <br><br>
   <a href="dashboard.html">← Back to Dashboard</a>
 
-  <!-- Load Supabase -->
+  <!-- Load Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Main script -->
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-      document.getElementById('add-btn').addEventListener('click', async () => {
+    let supabase;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+      const addButton = document.getElementById('add-btn');
+      addButton.addEventListener('click', async () => {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !session) {
-          alert('Not logged in');
+          alert('Not logged in.');
           return;
         }
 
         const userId = session.user.id;
-        const title = document.getElementById('title').value;
-        const description = document.getElementById('description').value;
-        const type = document.getElementById('type').value;
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const type = document.getElementById('type').value.trim();
 
         const { error } = await supabase
           .from('collaborations')
@@ -48,7 +53,7 @@
 
         if (error) {
           console.error('Error adding collaboration:', error);
-          alert('Error adding collaboration.');
+          alert('Failed to add collaboration. Check console.');
         } else {
           alert('Collaboration added successfully!');
           window.location.href = 'dashboard.html';
