@@ -5,15 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
 
-  <!-- Load Supabase FIRST -->
+  <!-- Load Supabase Library FIRST -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    // Initialize Supabase immediately after loading script
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-  </script>
 </head>
 
 <body>
@@ -41,76 +34,82 @@
     <a href="add-collaboration.html">Add Collaboration</a>
   </section>
 
+  <!-- All logic after Supabase loads -->
   <script>
-    async function loadDashboard() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (!session) {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize Supabase after DOM is loaded
+      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+      const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+      async function loadDashboard() {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const userId = session.user.id;
+        loadProfile(userId);
+        loadCollaborations(userId);
+      }
+
+      async function loadProfile(userId) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, email, bio, avatar_url')
+          .eq('user_id', userId)
+          .single();
+
+        if (error) {
+          console.error('Error loading profile:', error);
+          return;
+        }
+
+        document.getElementById('full-name').textContent = data.full_name || 'N/A';
+        document.getElementById('email').textContent = data.email || 'N/A';
+        document.getElementById('bio').textContent = data.bio || 'N/A';
+        document.getElementById('avatar').src = data.avatar_url || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
+      }
+
+      async function loadCollaborations(userId) {
+        const { data, error } = await supabase
+          .from('collaborations')
+          .select('*')
+          .eq('user_id', userId);
+
+        const list = document.getElementById('collaborations-list');
+        list.innerHTML = '';
+
+        if (error) {
+          console.error('Error loading collaborations:', error);
+          list.textContent = 'Failed to load collaborations.';
+          return;
+        }
+
+        if (data.length === 0) {
+          list.textContent = 'No collaborations found.';
+          return;
+        }
+
+        data.forEach(collab => {
+          const item = document.createElement('div');
+          item.innerHTML = `
+            <h3>${collab.title}</h3>
+            <p>${collab.description}</p>
+            <p><strong>Type:</strong> ${collab.type}</p>
+          `;
+          list.appendChild(item);
+        });
+      }
+
+      async function logout() {
+        await supabase.auth.signOut();
         window.location.href = 'login.html';
-        return;
       }
 
-      const user = session.user;
-      const userId = user.id;
-
-      loadProfile(userId);
-      loadCollaborations(userId);
-    }
-
-    async function loadProfile(userId) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, email, bio, avatar_url')
-        .eq('user_id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error loading profile:', error);
-        return;
-      }
-
-      document.getElementById('full-name').textContent = data.full_name || 'N/A';
-      document.getElementById('email').textContent = data.email || 'N/A';
-      document.getElementById('bio').textContent = data.bio || 'N/A';
-      document.getElementById('avatar').src = data.avatar_url || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png';
-    }
-
-    async function loadCollaborations(userId) {
-      const { data, error } = await supabase
-        .from('collaborations')
-        .select('*')
-        .eq('user_id', userId);
-
-      const list = document.getElementById('collaborations-list');
-      list.innerHTML = '';
-
-      if (error) {
-        console.error('Error loading collaborations:', error);
-        list.textContent = 'Failed to load collaborations.';
-        return;
-      }
-
-      if (data.length === 0) {
-        list.textContent = 'No collaborations found.';
-        return;
-      }
-
-      data.forEach(collab => {
-        const item = document.createElement('div');
-        item.innerHTML = `
-          <h3>${collab.title}</h3>
-          <p>${collab.description}</p>
-          <p><strong>Type:</strong> ${collab.type}</p>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    async function logout() {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
-    }
-
-    document.addEventListener('DOMContentLoaded', loadDashboard);
+      loadDashboard();
+    });
   </script>
 </body>
 </html>
