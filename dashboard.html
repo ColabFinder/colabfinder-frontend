@@ -18,18 +18,19 @@
     <div id="collaborations">Loading...</div>
   </section>
 
-  <!-- Supabase Library (MUST be loaded before custom script) -->
+  <!-- Supabase Library FIRST -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Custom Script (run only after Supabase is ready) -->
+  <!-- Now initialize and use Supabase -->
   <script>
-    window.addEventListener('load', async () => {
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (!session || error) {
         alert('You are not logged in!');
         window.location.href = 'login.html';
         return;
@@ -37,7 +38,7 @@
 
       const userId = session.user.id;
 
-      const { data, error } = await supabase
+      const { data: collaborations, error: fetchError } = await supabase
         .from('collaborations')
         .select('*')
         .eq('user_id', userId);
@@ -45,24 +46,24 @@
       const container = document.getElementById('collaborations');
       container.innerHTML = '';
 
-      if (error) {
-        console.error('❌ Error fetching collaborations:', error);
+      if (fetchError) {
+        console.error('Error fetching collaborations:', fetchError.message);
         container.textContent = 'Error loading collaborations.';
         return;
       }
 
-      if (data.length === 0) {
+      if (collaborations.length === 0) {
         container.textContent = 'No collaborations found.';
         return;
       }
 
-      data.forEach(collab => {
+      collaborations.forEach(collab => {
         const div = document.createElement('div');
         div.innerHTML = `
           <h3>${collab.title}</h3>
           <p>${collab.description}</p>
           <small>Type: ${collab.type}</small>
-          <hr />
+          <hr/>
         `;
         container.appendChild(div);
       });
