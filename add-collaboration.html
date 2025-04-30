@@ -17,40 +17,44 @@
   <label>Type (e.g., Paid, Content Swap, Giveaway):</label><br>
   <input type="text" id="type" placeholder="Type of collaboration"><br><br>
 
-  <button onclick="addCollaboration()">Add Collaboration</button>
+  <button id="add-btn">Add Collaboration</button>
   <br><br>
   <a href="dashboard.html">← Back to Dashboard</a>
 
+  <!-- Load Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    document.addEventListener('DOMContentLoaded', async () => {
+      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+      const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function addCollaboration() {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        alert('Not logged in');
-        return;
-      }
+      document.getElementById('add-btn').addEventListener('click', async () => {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) {
+          alert('Not logged in');
+          return;
+        }
 
-      const userId = session.user.id;
-      const title = document.getElementById('title').value;
-      const description = document.getElementById('description').value;
-      const type = document.getElementById('type').value;
+        const userId = session.user.id;
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const type = document.getElementById('type').value;
 
-      const { error } = await supabase
-        .from('collaborations')
-        .insert([{ user_id: userId, title, description, type }]);
+        const { error } = await supabase
+          .from('collaborations')
+          .insert([{ user_id: userId, title, description, type }]);
 
-      if (error) {
-        console.error('Error adding collaboration:', error);
-        alert('Error adding collaboration.');
-      } else {
-        alert('Collaboration added successfully!');
-        window.location.href = 'dashboard.html';
-      }
-    }
+        if (error) {
+          console.error('Error adding collaboration:', error);
+          alert('Error adding collaboration.');
+        } else {
+          alert('Collaboration added successfully!');
+          window.location.href = 'dashboard.html';
+        }
+      });
+    });
   </script>
 </body>
 </html>
