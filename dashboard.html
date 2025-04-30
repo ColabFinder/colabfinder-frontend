@@ -2,82 +2,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    header { margin-bottom: 20px; }
+    .collaboration { margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+  </style>
 </head>
 <body>
-  <h1>Welcome to Your Dashboard</h1>
-  <nav>
-    <a href="profile.html">Profile</a> |
-    <a href="add-collaboration.html">Add Collaboration</a> |
-    <button onclick="logout()">Logout</button>
-  </nav>
+  <header>
+    <h1>Welcome to Your Dashboard</h1>
+    <nav>
+      <a href="profile.html">Profile</a> |
+      <a href="add-collaboration.html">Add Collaboration</a> |
+      <a href="#" id="logout-btn">Logout</a>
+    </nav>
+  </header>
 
-  <h2>Your Profile</h2>
-  <div id="profile-info">
-    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
-    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
-    <a href="edit-profile.html">Edit Profile</a>
-  </div>
+  <section>
+    <h2>Your Collaborations</h2>
+    <div id="collaborations-list">Loading...</div>
+  </section>
 
-  <h2>Your Collaborations</h2>
-  <div id="collaborations-list">Loading...</div>
-
-  <!-- Load Supabase first -->
+  <!-- Supabase Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = supabase.createClient(
-      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-    );
-  </script>
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = window.supabase = createClient(supabaseUrl, supabaseKey);
 
-  <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (!session) {
-        window.location.href = "login.html";
+        window.location.href = '/login.html';
+        return;
+      }
+      const user = session.user;
+      const userId = user.id;
+
+      // Load Collaborations
+      const { data: collaborations, error: fetchError } = await supabase
+        .from('collaborations')
+        .select('*')
+        .eq('user_id', userId);
+
+      const list = document.getElementById("collaborations-list");
+      list.innerHTML = '';
+
+      if (fetchError) {
+        list.textContent = "Error loading collaborations.";
+        console.error(fetchError);
         return;
       }
 
-      const user = session.user;
-
-      // Load profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, email, bio')
-        .eq('user_id', user.id)
-        .single();
-
-      document.getElementById("full-name").textContent = profile?.full_name || "N/A";
-      document.getElementById("email").textContent = profile?.email || user.email;
-      document.getElementById("bio").textContent = profile?.bio || "N/A";
-
-      // Load collaborations
-      const { data: collaborations } = await supabase
-        .from('collaborations')
-        .select('title, description, type')
-        .eq('user_id', user.id);
-
-      const container = document.getElementById("collaborations-list");
-      container.innerHTML = "";
-
-      if (collaborations?.length) {
-        collaborations.forEach(collab => {
-          const div = document.createElement("div");
-          div.innerHTML = `<p><strong>${collab.title}</strong>: ${collab.description} (${collab.type})</p>`;
-          container.appendChild(div);
-        });
-      } else {
-        container.textContent = "No collaborations found.";
+      if (collaborations.length === 0) {
+        list.textContent = "No collaborations found.";
+        return;
       }
+
+      collaborations.forEach(collab => {
+        const div = document.createElement('div');
+        div.className = 'collaboration';
+        div.innerHTML = `<strong>${collab.title}</strong><br>${collab.description}<br><em>${collab.type}</em>`;
+        list.appendChild(div);
+      });
     });
 
-    function logout() {
-      supabase.auth.signOut().then(() => {
-        window.location.href = "login.html";
-      });
-    }
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/login.html';
+    });
   </script>
 </body>
 </html>
