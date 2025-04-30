@@ -16,25 +16,24 @@
   <h2>Your Collaborations</h2>
   <div id="collaborations">Loading...</div>
 
-  <!-- ✅ Load Supabase JS FIRST -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- ✅ Load Supabase client BEFORE using it -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
 
-  <!-- ✅ Init Supabase -->
-  <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-  </script>
-
-  <!-- ✅ Load Collaborations -->
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
+      // ✅ Initialize Supabase
+      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+      // ✅ Check session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         window.location.href = "login.html";
         return;
       }
 
+      // ✅ Fetch collaborations
       const userId = session.user.id;
       const { data, error } = await supabase
         .from("collaborations")
@@ -62,12 +61,12 @@
         </div>
         <hr/>
       `).join("");
-    });
 
-    // Logout handler
-    document.getElementById("logout").addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "login.html";
+      // ✅ Logout button
+      document.getElementById("logout").addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        window.location.href = "login.html";
+      });
     });
   </script>
 </body>
