@@ -16,26 +16,26 @@
   <label for="type">Type (e.g., Paid, Content Swap, Giveaway):</label><br />
   <input type="text" id="type" placeholder="Type of collaboration" /><br /><br />
 
-  <button onclick="addCollaboration()">Add Collaboration</button><br /><br />
+  <button id="addBtn">Add Collaboration</button><br /><br />
 
   <a href="dashboard.html">← Back to Dashboard</a>
 
-  <!-- Supabase Client (loaded first) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Use ES module for Supabase v2 -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-  <!-- Script that uses Supabase -->
-  <script>
     const supabase = createClient(
       'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
     );
 
-    async function addCollaboration() {
+    document.getElementById('addBtn').addEventListener('click', async () => {
       const title = document.getElementById('title').value.trim();
       const description = document.getElementById('description').value.trim();
       const type = document.getElementById('type').value.trim();
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
       if (sessionError || !session) {
         alert("You must be logged in to add a collaboration.");
         return;
@@ -54,7 +54,7 @@
         alert('Collaboration added successfully!');
         window.location.href = 'dashboard.html';
       }
-    }
+    });
   </script>
 </body>
 </html>
