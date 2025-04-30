@@ -2,76 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    header { margin-bottom: 20px; }
-    .collaboration { margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-  </style>
 </head>
 <body>
-  <header>
-    <h1>Welcome to Your Dashboard</h1>
-    <nav>
-      <a href="profile.html">Profile</a> |
-      <a href="add-collaboration.html">Add Collaboration</a> |
-      <a href="#" id="logout-btn">Logout</a>
-    </nav>
-  </header>
+  <h1>Welcome to Your Dashboard</h1>
+  <nav>
+    <a href="profile.html">Profile</a> |
+    <a href="add-collaboration.html">Add Collaboration</a> |
+    <a href="#" id="logout">Logout</a>
+  </nav>
 
-  <section>
-    <h2>Your Collaborations</h2>
-    <div id="collaborations-list">Loading...</div>
-  </section>
+  <h2>Your Collaborations</h2>
+  <div id="collaborations">Loading...</div>
 
-  <!-- Supabase Library -->
+  <!-- ✅ Load Supabase JS FIRST -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- ✅ Init Supabase -->
   <script>
     const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = window.supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  </script>
 
+  <!-- ✅ Load Collaborations -->
+  <script>
     document.addEventListener("DOMContentLoaded", async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        window.location.href = '/login.html';
-        return;
-      }
-      const user = session.user;
-      const userId = user.id;
-
-      // Load Collaborations
-      const { data: collaborations, error: fetchError } = await supabase
-        .from('collaborations')
-        .select('*')
-        .eq('user_id', userId);
-
-      const list = document.getElementById("collaborations-list");
-      list.innerHTML = '';
-
-      if (fetchError) {
-        list.textContent = "Error loading collaborations.";
-        console.error(fetchError);
+        window.location.href = "login.html";
         return;
       }
 
-      if (collaborations.length === 0) {
-        list.textContent = "No collaborations found.";
+      const userId = session.user.id;
+      const { data, error } = await supabase
+        .from("collaborations")
+        .select("*")
+        .eq("user_id", userId);
+
+      const container = document.getElementById("collaborations");
+
+      if (error) {
+        console.error("Error loading collaborations:", error.message);
+        container.innerHTML = "<p>Error loading collaborations.</p>";
         return;
       }
 
-      collaborations.forEach(collab => {
-        const div = document.createElement('div');
-        div.className = 'collaboration';
-        div.innerHTML = `<strong>${collab.title}</strong><br>${collab.description}<br><em>${collab.type}</em>`;
-        list.appendChild(div);
-      });
+      if (data.length === 0) {
+        container.innerHTML = "<p>No collaborations found.</p>";
+        return;
+      }
+
+      container.innerHTML = data.map(collab => `
+        <div>
+          <h3>${collab.title}</h3>
+          <p>${collab.description}</p>
+          <small>Type: ${collab.type}</small>
+        </div>
+        <hr/>
+      `).join("");
     });
 
-    document.getElementById('logout-btn').addEventListener('click', async () => {
+    // Logout handler
+    document.getElementById("logout").addEventListener("click", async () => {
       await supabase.auth.signOut();
-      window.location.href = '/login.html';
+      window.location.href = "login.html";
     });
   </script>
 </body>
