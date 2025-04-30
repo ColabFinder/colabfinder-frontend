@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
 </head>
 <body>
@@ -10,69 +9,74 @@
   <nav>
     <a href="profile.html">Profile</a> |
     <a href="add-collaboration.html">Add Collaboration</a> |
-    <a href="#" id="logout">Logout</a>
+    <button onclick="logout()">Logout</button>
   </nav>
 
-  <section>
-    <h2>Your Collaborations</h2>
-    <div id="collaborations">Loading...</div>
-  </section>
+  <h2>Your Profile</h2>
+  <div id="profile-info">
+    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+    <a href="edit-profile.html">Edit Profile</a>
+  </div>
 
-  <!-- Supabase Library FIRST -->
+  <h2>Your Collaborations</h2>
+  <div id="collaborations-list">Loading...</div>
+
+  <!-- Load Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
 
-  <!-- Now initialize and use Supabase -->
   <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-    window.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (!session || error) {
-        alert('You are not logged in!');
-        window.location.href = 'login.html';
+      if (!session) {
+        window.location.href = "login.html";
         return;
       }
 
-      const userId = session.user.id;
+      const user = session.user;
 
-      const { data: collaborations, error: fetchError } = await supabase
+      // Load profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, email, bio')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile) {
+        document.getElementById("full-name").textContent = profile.full_name || "N/A";
+        document.getElementById("email").textContent = profile.email || user.email;
+        document.getElementById("bio").textContent = profile.bio || "N/A";
+      } else {
+        console.log("Profile not found", profileError);
+      }
+
+      // Load collaborations
+      const { data: collaborations, error: collabError } = await supabase
         .from('collaborations')
-        .select('*')
-        .eq('user_id', userId);
+        .select('title, description, type')
+        .eq('user_id', user.id);
 
-      const container = document.getElementById('collaborations');
-      container.innerHTML = '';
+      const container = document.getElementById("collaborations-list");
+      container.innerHTML = "";
 
-      if (fetchError) {
-        console.error('Error fetching collaborations:', fetchError.message);
-        container.textContent = 'Error loading collaborations.';
-        return;
+      if (collaborations && collaborations.length > 0) {
+        collaborations.forEach(collab => {
+          const div = document.createElement("div");
+          div.innerHTML = `<p><strong>${collab.title}</strong>: ${collab.description} (${collab.type})</p>`;
+          container.appendChild(div);
+        });
+      } else {
+        container.textContent = "No collaborations found.";
       }
-
-      if (collaborations.length === 0) {
-        container.textContent = 'No collaborations found.';
-        return;
-      }
-
-      collaborations.forEach(collab => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-          <h3>${collab.title}</h3>
-          <p>${collab.description}</p>
-          <small>Type: ${collab.type}</small>
-          <hr/>
-        `;
-        container.appendChild(div);
-      });
-
-      document.getElementById('logout').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-      });
     });
+
+    function logout() {
+      supabase.auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
   </script>
 </body>
 </html>
