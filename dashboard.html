@@ -17,15 +17,17 @@
     <div id="collaboration-list">Loading...</div>
   </section>
 
-  <!-- Load Supabase script BEFORE initializing it -->
+  <!-- Load Supabase Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabase = window.supabase = supabase.createClient(
-      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-    );
 
-    document.addEventListener('DOMContentLoaded', async () => {
+  <!-- Wait until Supabase is loaded before running code -->
+  <script>
+    window.addEventListener('load', async () => {
+      const supabase = window.supabase = window.supabase.createClient(
+        'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
+      );
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
@@ -33,6 +35,7 @@
       }
 
       const user = session.user;
+
       const { data, error } = await supabase
         .from('collaborations')
         .select('*')
@@ -64,11 +67,11 @@
         `;
         list.appendChild(div);
       });
-    });
 
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
+      document.getElementById('logout').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
     });
   </script>
 </body>
