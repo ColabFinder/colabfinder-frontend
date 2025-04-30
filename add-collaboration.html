@@ -6,24 +6,26 @@
 </head>
 <body>
   <h2>Add a New Collaboration</h2>
-  
+
   <label for="title">Title:</label><br />
   <input type="text" id="title" placeholder="Enter collaboration title" /><br /><br />
-  
+
   <label for="description">Description:</label><br />
   <textarea id="description" placeholder="Enter collaboration description"></textarea><br /><br />
-  
+
   <label for="type">Type (e.g., Paid, Content Swap, Giveaway):</label><br />
   <input type="text" id="type" placeholder="Type of collaboration" /><br /><br />
-  
+
   <button onclick="addCollaboration()">Add Collaboration</button><br /><br />
-  
+
   <a href="dashboard.html">← Back to Dashboard</a>
 
-  <!-- Supabase Client -->
+  <!-- Supabase Client (loaded first) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Script that uses Supabase -->
   <script>
-    const supabase = window.supabase = createClient(
+    const supabase = createClient(
       'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
     );
@@ -35,24 +37,19 @@
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
-        alert("Not logged in!");
+        alert("You must be logged in to add a collaboration.");
         return;
       }
 
-      const user = session.user;
+      const userId = session.user.id;
 
       const { error } = await supabase
         .from('collaborations')
-        .insert([{
-          user_id: user.id,
-          title,
-          description,
-          type
-        }]);
+        .insert([{ user_id: userId, title, description, type }]);
 
       if (error) {
-        console.error('Error adding collaboration:', error);
-        alert('Failed to add collaboration. See console for details.');
+        console.error('Error adding collaboration:', error.message);
+        alert('Failed to add collaboration.');
       } else {
         alert('Collaboration added successfully!');
         window.location.href = 'dashboard.html';
