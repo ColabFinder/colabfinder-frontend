@@ -18,18 +18,17 @@
     <div id="collaborations">Loading...</div>
   </section>
 
-  <!-- Load Supabase library BEFORE the script that uses it -->
+  <!-- Supabase Library (MUST be loaded before custom script) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Place this script AFTER Supabase is loaded -->
+  <!-- Custom Script (run only after Supabase is ready) -->
   <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    window.addEventListener('load', async () => {
+      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+      const supabase = window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
       if (sessionError || !session) {
         alert('You are not logged in!');
         window.location.href = 'login.html';
@@ -37,23 +36,20 @@
       }
 
       const userId = session.user.id;
-      console.log('✅ Logged in user ID:', userId);
 
       const { data, error } = await supabase
         .from('collaborations')
         .select('*')
         .eq('user_id', userId);
 
-      if (error) {
-        console.error('❌ Error fetching collaborations:', error);
-        document.getElementById('collaborations').textContent = 'Error loading collaborations.';
-        return;
-      }
-
-      console.log('📦 Fetched collaborations:', data);
-
       const container = document.getElementById('collaborations');
       container.innerHTML = '';
+
+      if (error) {
+        console.error('❌ Error fetching collaborations:', error);
+        container.textContent = 'Error loading collaborations.';
+        return;
+      }
 
       if (data.length === 0) {
         container.textContent = 'No collaborations found.';
@@ -70,11 +66,11 @@
         `;
         container.appendChild(div);
       });
-    });
 
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
+      document.getElementById('logout').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
     });
   </script>
 </body>
