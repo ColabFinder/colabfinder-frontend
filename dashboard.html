@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
@@ -12,19 +14,17 @@
     <a href="#" id="logout">Logout</a>
   </nav>
 
-  <h2>Your Collaborations</h2>
-  <div id="collaborations">Loading...</div>
+  <section>
+    <h2>Your Collaborations</h2>
+    <div id="collaborations">Loading...</div>
+  </section>
 
-  <!-- Supabase as ES module -->
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    const supabase = createClient(
-      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-    );
-
-    const loadCollaborations = async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
@@ -34,46 +34,45 @@
       }
 
       const userId = session.user.id;
+      console.log('✅ Logged in user ID:', userId);
 
       const { data, error } = await supabase
         .from('collaborations')
         .select('*')
         .eq('user_id', userId);
 
-      const container = document.getElementById('collaborations');
-      container.innerHTML = '';
-
       if (error) {
-        console.error('Error fetching collaborations:', error.message);
-        container.innerText = 'Error loading collaborations.';
+        console.error('❌ Error fetching collaborations:', error);
+        document.getElementById('collaborations').textContent = 'Error loading collaborations.';
         return;
       }
 
+      console.log('📦 Fetched collaborations:', data);
+
+      const container = document.getElementById('collaborations');
+      container.innerHTML = '';
+
       if (data.length === 0) {
-        container.innerText = 'No collaborations found.';
+        container.textContent = 'No collaborations found.';
         return;
       }
 
       data.forEach(collab => {
         const div = document.createElement('div');
-        div.style.border = '1px solid #ccc';
-        div.style.padding = '10px';
-        div.style.margin = '10px 0';
         div.innerHTML = `
-          <strong>${collab.title}</strong><br />
-          ${collab.description}<br />
-          <em>Type: ${collab.type}</em>
+          <h3>${collab.title}</h3>
+          <p>${collab.description}</p>
+          <small>Type: ${collab.type}</small>
+          <hr />
         `;
         container.appendChild(div);
       });
-    };
+    });
 
     document.getElementById('logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
       window.location.href = 'login.html';
     });
-
-    loadCollaborations();
   </script>
 </body>
 </html>
