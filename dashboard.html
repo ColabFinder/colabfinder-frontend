@@ -1,127 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    .nav a { margin-right: 20px; }
-    img {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .collab {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin: 10px 0;
-    }
+    header { margin-bottom: 20px; }
+    .collaboration { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    .collab-actions { margin-top: 5px; }
+    button { margin-right: 10px; }
   </style>
 </head>
 <body>
-  <h1>Welcome to Your Dashboard</h1>
-  <div class="nav">
-    <a href="profile.html">Profile</a>
-    <a href="add-collaboration.html">Add Collaboration</a>
-    <a href="#" onclick="logout()">Logout</a>
-  </div>
+  <header>
+    <h1>Welcome to Your Dashboard</h1>
+    <nav>
+      <a href="profile.html">Profile</a> |
+      <a href="add-collaboration.html">Add Collaboration</a> |
+      <a href="#" id="logout">Logout</a>
+    </nav>
+  </header>
 
-  <div>
+  <section>
     <h2>Your Profile</h2>
-    <img id="avatar" src="fallback-avatar.png" alt="User Avatar" onerror="this.src='fallback-avatar.png'" />
+    <img id="avatar" src="fallback-avatar.png" alt="User Avatar" width="100">
     <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
     <p><strong>Email:</strong> <span id="email">Loading...</span></p>
     <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
     <a href="edit-profile.html">Edit Profile</a>
-  </div>
+  </section>
 
-  <div>
+  <section>
     <h2>Your Collaborations</h2>
     <div id="collaborations">Loading...</div>
-  </div>
-
-  <!-- Supabase library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </section>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-      const supabase = window.supabase = window.supabase || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const supabase = window.supabase = window.supabase || window.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY) || supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      if (!supabase || !supabase.auth) {
+        console.error('Supabase not loaded');
+        return;
+      }
 
       try {
-        // Wait for Supabase auth session to be available
         const {
-          data: { session }
+          data: { session },
+          error
         } = await supabase.auth.getSession();
 
-        if (!session || !session.user) {
-          window.location.href = 'login.html';
+        if (error || !session) {
+          console.error('No session found');
+          window.location.href = '/login.html';
           return;
         }
 
         const user = session.user;
+        const userId = user.id;
 
-        // Load Profile
-        const { data: profile, error: profileError } = await supabase
+        // Load profile
+        const { data: profiles, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, avatar_url, bio')
-          .eq('user_id', user.id)
-          .single();
+          .select('full_name, email, bio, avatar_url')
+          .eq('user_id', userId);
 
-        if (profileError) throw profileError;
-
-        document.getElementById('full-name').innerText = profile.full_name || 'N/A';
-        document.getElementById('email').innerText = user.email;
-        document.getElementById('bio').innerText = profile.bio || '';
-
-        if (profile.avatar_url) {
-          document.getElementById('avatar').src = profile.avatar_url;
+        if (profiles && profiles.length > 0) {
+          const profile = profiles[0];
+          document.getElementById('full-name').innerText = profile.full_name || 'N/A';
+          document.getElementById('email').innerText = profile.email || user.email;
+          document.getElementById('bio').innerText = profile.bio || 'No bio';
+          document.getElementById('avatar').src = profile.avatar_url || 'fallback-avatar.png';
         }
 
-        // Load Collaborations
+        // Load collaborations
         const { data: collaborations, error: collabError } = await supabase
           .from('collaborations')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', userId);
 
-        if (collabError) throw collabError;
+        const collabContainer = document.getElementById('collaborations');
+        collabContainer.innerHTML = '';
 
-        const container = document.getElementById('collaborations');
-        container.innerHTML = '';
-
-        if (!collaborations || collaborations.length === 0) {
-          container.innerText = 'No collaborations found.';
-        } else {
-          collaborations.forEach(c => {
+        if (collaborations && collaborations.length > 0) {
+          collaborations.forEach(collab => {
             const div = document.createElement('div');
-            div.className = 'collab';
+            div.className = 'collaboration';
             div.innerHTML = `
-              <strong>${c.title}</strong><br/>
-              ${c.description}<br/>
-              <em>Type: ${c.type}</em><br/>
-              <button onclick="deleteCollaboration('${c.id}')">Delete</button>
+              <h3>${collab.title}</h3>
+              <p>${collab.description}</p>
+              <p><strong>Type:</strong> ${collab.type}</p>
+              <div class="collab-actions">
+                <button onclick="deleteCollaboration('${collab.id}')">Delete</button>
+              </div>
             `;
-            container.appendChild(div);
+            collabContainer.appendChild(div);
           });
+        } else {
+          collabContainer.innerText = 'No collaborations found.';
         }
 
-      } catch (error) {
-        console.error('Dashboard load error:', error);
+        // Delete handler
+        window.deleteCollaboration = async (id) => {
+          const { error } = await supabase
+            .from('collaborations')
+            .delete()
+            .eq('id', id);
+
+          if (error) {
+            alert('Failed to delete collaboration');
+            console.error(error);
+          } else {
+            location.reload();
+          }
+        };
+
+        document.getElementById('logout').addEventListener('click', async () => {
+          await supabase.auth.signOut();
+          window.location.href = '/login.html';
+        });
+      } catch (err) {
+        console.error('Dashboard load error:', err);
       }
-
-      window.logout = async function () {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-      };
-
-      window.deleteCollaboration = async function (id) {
-        await supabase.from('collaborations').delete().eq('id', id);
-        location.reload();
-      };
     });
   </script>
 </body>
