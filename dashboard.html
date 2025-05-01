@@ -15,7 +15,7 @@
 
   <section id="profile-section">
     <h2>Your Profile</h2>
-    <img id="avatar" src="fallback-avatar.png" alt="User Avatar" />
+    <img id="avatar" src="https://placehold.co/100x100" alt="User Avatar" />
     <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
     <p><strong>Email:</strong> <span id="email">Loading...</span></p>
     <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
@@ -27,13 +27,13 @@
     <div id="collaborations">Loading...</div>
   </section>
 
-  <!-- Supabase and logic scripts -->
+  <!-- Supabase Script -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
       const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = window.supabase = supabasejs.createClient(supabaseUrl, supabaseKey);
+      const supabase = window.supabase = createClient(supabaseUrl, supabaseKey);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -43,7 +43,7 @@
 
       const userId = session.user.id;
 
-      // Load Profile
+      // Load profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name, bio, avatar_url')
@@ -54,10 +54,10 @@
         document.getElementById('full-name').innerText = profile.full_name || 'N/A';
         document.getElementById('bio').innerText = profile.bio || 'N/A';
         document.getElementById('email').innerText = session.user.email;
-        document.getElementById('avatar').src = profile.avatar_url || 'fallback-avatar.png';
+        document.getElementById('avatar').src = profile.avatar_url || 'https://placehold.co/100x100';
       }
 
-      // Load Collaborations
+      // Load collaborations
       const { data: collaborations } = await supabase
         .from('collaborations')
         .select('title, description, type')
