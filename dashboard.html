@@ -32,7 +32,7 @@
 
   <div class="section">
     <h2>Your Profile</h2>
-    <img id="avatar" src="https://via.placeholder.com/100" alt="User Avatar" />
+    <img id="avatar" src="fallback-avatar.png" alt="User Avatar" onerror="this.src='fallback-avatar.png'" />
     <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
     <p><strong>Email:</strong> <span id="email">Loading...</span></p>
     <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
@@ -44,25 +44,25 @@
     <div id="collaborations">Loading...</div>
   </div>
 
-  <!-- Load Supabase first -->
+  <!-- Supabase script -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      if (typeof window.supabase === 'undefined') {
-        const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      }
+      const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+      const supabase = window.supabase = supabase || window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY) || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data?.session) {
+      // Check session
+      const sessionResponse = await supabase.auth.getSession();
+      if (!sessionResponse || !sessionResponse.data || !sessionResponse.data.session) {
         window.location.href = 'login.html';
         return;
       }
 
-      const user = data.session.user;
+      const user = sessionResponse.data.session.user;
 
-      // Load profile
+      // Fetch profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name, avatar_url, bio')
@@ -78,7 +78,7 @@
         }
       }
 
-      // Load collaborations
+      // Fetch collaborations
       const { data: collaborations } = await supabase
         .from('collaborations')
         .select('*')
