@@ -27,21 +27,23 @@
     <div id="collaborations">Loading...</div>
   </section>
 
-  <!-- Supabase Script (defer ensures it's available before DOMContentLoaded runs) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <!-- Supabase Script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Your App Logic -->
+  <!-- Load App AFTER Supabase is available -->
   <script>
-    window.addEventListener('DOMContentLoaded', async () => {
-      // Wait until Supabase is available
+    document.addEventListener('DOMContentLoaded', async () => {
       if (typeof createClient !== 'function') {
-        console.error('Supabase not loaded yet');
-        return;
+        console.error("Supabase not loaded yet. Retrying in 200ms...");
+        return setTimeout(() => location.reload(), 200);
       }
 
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-      const supabase = window.supabase = createClient(supabaseUrl, supabaseKey);
+      const supabase = createClient(
+        'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
+      );
+
+      window.supabase = supabase;
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -51,7 +53,6 @@
 
       const userId = session.user.id;
 
-      // Load profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name, bio, avatar_url')
@@ -65,7 +66,6 @@
         document.getElementById('avatar').src = profile.avatar_url || 'https://placehold.co/100x100';
       }
 
-      // Load collaborations
       const { data: collaborations } = await supabase
         .from('collaborations')
         .select('title, description, type')
