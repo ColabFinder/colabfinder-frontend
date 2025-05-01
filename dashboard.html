@@ -27,10 +27,18 @@
     <div id="collaborations">Loading...</div>
   </section>
 
-  <!-- Supabase Script -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase Script (defer ensures it's available before DOMContentLoaded runs) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <!-- Your App Logic -->
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Wait until Supabase is available
+      if (typeof createClient !== 'function') {
+        console.error('Supabase not loaded yet');
+        return;
+      }
+
       const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
       const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
       const supabase = window.supabase = createClient(supabaseUrl, supabaseKey);
