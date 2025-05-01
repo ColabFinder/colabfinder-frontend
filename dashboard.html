@@ -2,46 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    img { border-radius: 50px; }
-    .collab { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-    .collab-title { font-weight: bold; }
-    .collab-actions { margin-top: 5px; }
-    button { margin-right: 10px; }
-  </style>
 </head>
 <body>
-  <h2>Welcome to Your Dashboard</h2>
+  <h1>Welcome to Your Dashboard</h1>
   <nav>
     <a href="profile.html">Profile</a> |
     <a href="add-collaboration.html">Add Collaboration</a> |
-    <a href="#" id="logout">Logout</a>
+    <a href="#" onclick="logout()">Logout</a>
   </nav>
 
-  <h3>Your Profile</h3>
-  <div>
-    <img id="avatar" src="https://ui-avatars.com/api/?name=User&size=100" alt="User Avatar" width="100" height="100" />
-    <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
-    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-    <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
-    <a href="edit-profile.html">Edit Profile</a>
-  </div>
+  <h2>Your Profile</h2>
+  <img id="user-avatar" src="fallback-avatar.png" alt="User Avatar" width="100">
+  <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
+  <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+  <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+  <a href="edit-profile.html">Edit Profile</a>
 
-  <h3>Your Collaborations</h3>
-  <div id="collaborations">Loading...</div>
+  <h2>Your Collaborations</h2>
+  <div id="collaborations-list">Loading...</div>
 
-  <!-- Load Supabase library -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+    const supabase = supabasejs.createClient(supabaseUrl, supabaseKey);
 
-    const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    document.addEventListener('DOMContentLoaded', async () => {
+    async function loadDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
@@ -51,83 +39,61 @@
       const user = session.user;
       const userId = user.id;
 
-      loadProfile(userId);
-      loadCollaborations(userId);
-
-      document.getElementById('logout').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-      });
-    });
-
-    async function loadProfile(userId) {
-      const { data, error } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('full_name, email, bio, avatar_url')
         .eq('user_id', userId)
         .single();
 
-      if (error || !data) return;
+      document.getElementById('full-name').innerText = profile?.full_name || 'N/A';
+      document.getElementById('email').innerText = user.email || 'N/A';
+      document.getElementById('bio').innerText = profile?.bio || '';
+      document.getElementById('user-avatar').src = profile?.avatar_url || 'fallback-avatar.png';
 
-      document.getElementById('full-name').innerText = data.full_name || 'N/A';
-      document.getElementById('email').innerText = data.email || 'N/A';
-      document.getElementById('bio').innerText = data.bio || 'N/A';
-      if (data.avatar_url) {
-        document.getElementById('avatar').src = data.avatar_url;
-      }
-    }
-
-    async function loadCollaborations(userId) {
-      const container = document.getElementById('collaborations');
-      container.innerHTML = 'Loading...';
-
-      const { data, error } = await supabase
+      const { data: collaborations } = await supabase
         .from('collaborations')
-        .select('id, title, description, type')
+        .select('*')
         .eq('user_id', userId);
 
-      if (error) {
-        container.innerText = 'Error loading collaborations';
-        return;
-      }
+      const list = document.getElementById('collaborations-list');
+      list.innerHTML = '';
 
-      if (!data.length) {
-        container.innerText = 'No collaborations found.';
-        return;
+      if (collaborations && collaborations.length > 0) {
+        collaborations.forEach(item => {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <p><strong>${item.title}</strong><br>${item.description}<br>Type: ${item.type}</p>
+            <button onclick="deleteCollaboration('${item.id}')">Delete</button>
+            <hr/>
+          `;
+          list.appendChild(div);
+        });
+      } else {
+        list.innerText = 'No collaborations found.';
       }
-
-      container.innerHTML = '';
-      data.forEach(collab => {
-        const div = document.createElement('div');
-        div.className = 'collab';
-        div.innerHTML = `
-          <div class="collab-title">${collab.title}</div>
-          <div>${collab.description}</div>
-          <div>Type: ${collab.type}</div>
-          <div class="collab-actions">
-            <button onclick="deleteCollaboration('${collab.id}')">Delete</button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
     }
 
-    async function deleteCollaboration(id) {
-      const confirmed = confirm('Are you sure you want to delete this collaboration?');
-      if (!confirmed) return;
-
+    async function deleteCollaboration(collabId) {
       const { error } = await supabase
         .from('collaborations')
         .delete()
-        .eq('id', id);
+        .eq('id', collabId);
 
-      if (!error) {
-        alert('Collaboration deleted.');
-        location.reload();
+      if (error) {
+        alert('Failed to delete collaboration.');
+        console.error(error);
       } else {
-        alert('Failed to delete.');
+        alert('Collaboration deleted.');
+        loadDashboard();
       }
     }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'login.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboard);
   </script>
 </body>
 </html>
