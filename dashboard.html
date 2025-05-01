@@ -43,78 +43,82 @@
     <div id="collaborations">Loading...</div>
   </div>
 
-  <!-- Load Supabase first -->
+  <!-- Load Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Make sure supabase is defined
-      if (typeof supabase === 'undefined') {
-        const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      }
+    window.addEventListener('load', async () => {
+      const SUPABASE_URL = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData.session;
+      const supabase = window.supabase = window.supabase || createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      if (!session) {
-        window.location.href = 'login.html';
-        return;
-      }
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const session = sessionData?.session;
 
-      const user = session.user;
-
-      // Load profile info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url, bio')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profile) {
-        document.getElementById('full-name').innerText = profile.full_name || 'N/A';
-        document.getElementById('email').innerText = user.email;
-        document.getElementById('bio').innerText = profile.bio || '';
-        if (profile.avatar_url) {
-          document.getElementById('avatar').src = profile.avatar_url;
+        if (!session) {
+          window.location.href = 'login.html';
+          return;
         }
-      }
 
-      // Load collaborations
-      const { data: collaborations } = await supabase
-        .from('collaborations')
-        .select('*')
-        .eq('user_id', user.id);
+        const user = session.user;
 
-      const collabContainer = document.getElementById('collaborations');
-      collabContainer.innerHTML = '';
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url, bio')
+          .eq('user_id', user.id)
+          .single();
 
-      if (!collaborations || collaborations.length === 0) {
-        collabContainer.innerText = 'No collaborations found.';
-      } else {
-        collaborations.forEach(collab => {
-          const div = document.createElement('div');
-          div.className = 'collab';
-          div.innerHTML = `
-            <strong>${collab.title}</strong><br/>
-            ${collab.description}<br/>
-            <em>Type: ${collab.type}</em><br/>
-            <button onclick="deleteCollaboration('${collab.id}')">Delete</button>
-          `;
-          collabContainer.appendChild(div);
-        });
+        if (profile) {
+          document.getElementById('full-name').innerText = profile.full_name || 'N/A';
+          document.getElementById('email').innerText = user.email;
+          document.getElementById('bio').innerText = profile.bio || '';
+          if (profile.avatar_url) {
+            document.getElementById('avatar').src = profile.avatar_url;
+          }
+        }
+
+        const { data: collaborations } = await supabase
+          .from('collaborations')
+          .select('*')
+          .eq('user_id', user.id);
+
+        const collabContainer = document.getElementById('collaborations');
+        collabContainer.innerHTML = '';
+
+        if (!collaborations || collaborations.length === 0) {
+          collabContainer.innerText = 'No collaborations found.';
+        } else {
+          collaborations.forEach(collab => {
+            const div = document.createElement('div');
+            div.className = 'collab';
+            div.innerHTML = `
+              <strong>${collab.title}</strong><br/>
+              ${collab.description}<br/>
+              <em>Type: ${collab.type}</em><br/>
+              <button onclick="deleteCollaboration('${collab.id}')">Delete</button>
+            `;
+            collabContainer.appendChild(div);
+          });
+        }
+      } catch (error) {
+        console.error('Dashboard load error:', error);
       }
     });
 
     async function logout() {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
+      if (window.supabase) {
+        await window.supabase.auth.signOut();
+        window.location.href = 'login.html';
+      }
     }
 
     async function deleteCollaboration(id) {
-      await supabase.from('collaborations').delete().eq('id', id);
-      window.location.reload();
+      if (window.supabase) {
+        await window.supabase.from('collaborations').delete().eq('id', id);
+        window.location.reload();
+      }
     }
   </script>
 </body>
