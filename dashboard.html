@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -36,7 +36,7 @@
 
   <section id="profile-section">
     <h2>Your Profile</h2>
-    <img id="user-avatar" src="https://via.placeholder.com/100" alt="User Avatar" width="100" />
+    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User" alt="User Avatar" width="100"/>
     <p><strong>Full Name:</strong> <span id="full-name">Loading...</span></p>
     <p><strong>Email:</strong> <span id="email">Loading...</span></p>
     <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
@@ -49,11 +49,25 @@
   </section>
 
   <script>
-    const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Wait for the Supabase library to be ready
+      const checkSupabase = () => {
+        return new Promise(resolve => {
+          const interval = setInterval(() => {
+            if (window.supabase) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 50);
+        });
+      };
 
-    document.addEventListener('DOMContentLoaded', async () => {
+      await checkSupabase();
+
+      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
+      const supabase = window.supabase = window.supabase || createClient(supabaseUrl, supabaseKey);
+
       const { data: { session }, error } = await supabase.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
@@ -63,73 +77,73 @@
       const user = session.user;
       loadProfile(user.id);
       loadCollaborations(user.id);
-    });
 
-    async function loadProfile(userId) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url, bio, email')
-        .eq('user_id', userId)
-        .single();
+      async function loadProfile(userId) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url, bio, email')
+          .eq('user_id', userId)
+          .single();
 
-      if (error || !data) {
-        console.error('Profile load error:', error);
-        return;
+        if (error || !data) {
+          console.error('Profile load error:', error);
+          return;
+        }
+
+        document.getElementById('full-name').innerText = data.full_name || 'N/A';
+        document.getElementById('bio').innerText = data.bio || 'N/A';
+        document.getElementById('email').innerText = data.email || 'N/A';
+
+        const avatar = document.getElementById('user-avatar');
+        avatar.src = data.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(data.full_name);
       }
 
-      document.getElementById('full-name').innerText = data.full_name || 'N/A';
-      document.getElementById('bio').innerText = data.bio || 'N/A';
-      document.getElementById('email').innerText = data.email || 'N/A';
+      async function loadCollaborations(userId) {
+        const { data, error } = await supabase
+          .from('collaborations')
+          .select('*')
+          .eq('user_id', userId);
 
-      const avatar = document.getElementById('user-avatar');
-      avatar.src = data.avatar_url || 'https://via.placeholder.com/100';
-    }
+        const container = document.getElementById('collaborations');
+        container.innerHTML = '';
 
-    async function loadCollaborations(userId) {
-      const { data, error } = await supabase
-        .from('collaborations')
-        .select('*')
-        .eq('user_id', userId);
+        if (error || !data || data.length === 0) {
+          container.innerText = 'No collaborations found.';
+          return;
+        }
 
-      const container = document.getElementById('collaborations');
-      container.innerHTML = '';
-
-      if (error || !data || data.length === 0) {
-        container.innerText = 'No collaborations found.';
-        return;
+        data.forEach((collab) => {
+          const div = document.createElement('div');
+          div.className = 'collaboration';
+          div.innerHTML = `
+            <p><strong>${collab.title}</strong></p>
+            <p>${collab.description}</p>
+            <p><strong>Type:</strong> ${collab.type}</p>
+            <div class="collab-actions">
+              <button onclick="deleteCollaboration('${collab.id}')">Delete</button>
+            </div>
+          `;
+          container.appendChild(div);
+        });
       }
 
-      data.forEach((collab) => {
-        const div = document.createElement('div');
-        div.className = 'collaboration';
-        div.innerHTML = `
-          <p><strong>${collab.title}</strong></p>
-          <p>${collab.description}</p>
-          <p><strong>Type:</strong> ${collab.type}</p>
-          <div class="collab-actions">
-            <button onclick="deleteCollaboration('${collab.id}')">Delete</button>
-          </div>
-        `;
-        container.appendChild(div);
+      window.deleteCollaboration = async function(id) {
+        const { error } = await supabase
+          .from('collaborations')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Error deleting collaboration:', error);
+        } else {
+          location.reload();
+        }
+      };
+
+      document.getElementById('logout').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
       });
-    }
-
-    async function deleteCollaboration(id) {
-      const { error } = await supabase
-        .from('collaborations')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error('Error deleting collaboration:', error);
-      } else {
-        location.reload();
-      }
-    }
-
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
     });
   </script>
 </body>
