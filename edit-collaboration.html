@@ -3,95 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <title>Edit Collaboration</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
-  <script src="supabaseClient.js"></script>
 </head>
 <body>
   <h1>Edit Collaboration</h1>
-  <!-- Navigation -->
-  <p>
-    <a href="dashboard.html">← Back to Dashboard</a> | 
-    <a href="profile.html">Profile</a> | 
-    <a href="#" id="logout-link-editcol">Logout</a>
-  </p>
 
-  <form id="edit-collab-form">
-    <p>
-      <label>Title:<br>
-      <input type="text" id="edit-title" name="title" required></label>
-    </p>
-    <p>
-      <label>Description:<br>
-      <textarea id="edit-desc" name="description" rows="4" required></textarea></label>
-    </p>
-    <p>
-      <label>Type:<br>
-      <input type="text" id="edit-type" name="type" required></label>
-    </p>
-    <p>
-      <button type="submit">💾 Save Changes</button>
-      <a href="dashboard.html" style="margin-left: 1em;">Cancel</a>
-    </p>
+  <form id="edit-collab">
+    <label>Title:<br><input type="text" id="title" required></label><br><br>
+    <label>Description:<br><textarea id="description" required></textarea></label><br><br>
+    <label>Type:<br><input type="text" id="type" required></label><br><br>
+    <button type="submit">Save Changes</button>
   </form>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const user = supabase.auth.user();
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
-      // Parse collaboration ID from URL query string (e.g., ?id=xxxxxxxx)
-      const params = new URLSearchParams(window.location.search);
-      const collabId = params.get('id');
-      if (!collabId) {
-        alert("No collaboration ID provided.");
-        window.location.href = "dashboard.html";
-        return;
-      }
-      // Fetch the collaboration to edit
-      let { data: collab, error } = await supabase
+  <br><a href="dashboard.html">← Back to Dashboard</a>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) {
+      alert('No collaboration ID.');
+      location.href = 'dashboard.html';
+    }
+
+    const load = async () => {
+      const { data, error } = await supabase
         .from('collaborations')
-        .select('id, title, description, type')
-        .eq('id', collabId)
+        .select('*')
+        .eq('id', id)
         .single();
-      if (error || !collab) {
-        alert("Error loading collaboration details.");
-        window.location.href = "dashboard.html";
-        return;
-      }
-      // Prefill form fields
-      document.getElementById('edit-title').value = collab.title || "";
-      document.getElementById('edit-desc').value = collab.description || "";
-      document.getElementById('edit-type').value = collab.type || "";
 
-      // Submit handler to update the collaboration
-      document.getElementById('edit-collab-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const newTitle = document.getElementById('edit-title').value.trim();
-        const newDesc = document.getElementById('edit-desc').value.trim();
-        const newType = document.getElementById('edit-type').value.trim();
-        const { error: updateErr } = await supabase
-          .from('collaborations')
-          .update({ title: newTitle, description: newDesc, type: newType })
-          .eq('id', collabId)
-          .eq('user_id', user.id);  // ensure user owns the collab (for safety)
-        if (updateErr) {
-          console.error("Update collaboration error:", updateErr);
-          alert("Failed to save changes: " + updateErr.message);
-        } else {
-          window.location.href = "dashboard.html";
-        }
-      });
+      if (error) return alert('Load failed');
 
-      // Logout link
-      document.getElementById('logout-link-editcol').addEventListener('click', async (e) => {
-        e.preventDefault();
-        await supabase.auth.signOut();
-        window.location.href = "index.html";
-      });
+      document.getElementById('title').value = data.title;
+      document.getElementById('description').value = data.description;
+      document.getElementById('type').value = data.type;
+    };
+
+    document.getElementById('edit-collab').addEventListener('submit', async e => {
+      e.preventDefault();
+      const { error } = await supabase
+        .from('collaborations')
+        .update({
+          title: document.getElementById('title').value,
+          description: document.getElementById('description').value,
+          type: document.getElementById('type').value
+        })
+        .eq('id', id);
+
+      if (error) alert('Update failed');
+      else location.href = 'dashboard.html';
     });
+
+    load();
   </script>
 </body>
 </html>
