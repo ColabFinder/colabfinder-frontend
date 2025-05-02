@@ -1,7 +1,9 @@
+/*****************************************************************
+  dashboard-script.js    – full replacement
+*****************************************************************/
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1️⃣  Session check
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     window.location.href = 'login.html';
@@ -9,15 +11,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const user = session.user;
 
-  // 2️⃣  Load & render data
   await loadProfile(user);
   await loadCollaborations(user);
-  await loadRecommendations(user);
+  await loadRecommendations(user);   // <- will now fail softly
 });
 
-/* ──────────────────────────────────────────────
-   Profile (name, bio, avatar)
-─────────────────────────────────────────────── */
+/* ───────── Profile ───────── */
 async function loadProfile(user) {
   const { data, error } = await supabase
     .from('profiles')
@@ -25,7 +24,7 @@ async function loadProfile(user) {
     .eq('user_id', user.id)
     .single();
 
-  if (error) { console.error('Profile load error:', error.message); return; }
+  if (error) return console.error('Profile load error:', error);
 
   document.getElementById('full-name').textContent = data.full_name || '';
   document.getElementById('email').textContent     = user.email;
@@ -34,9 +33,7 @@ async function loadProfile(user) {
     data.avatar_url || 'https://placehold.co/100x100';
 }
 
-/* ──────────────────────────────────────────────
-   Your own collaborations
-─────────────────────────────────────────────── */
+/* ───────── Your collaborations ───────── */
 async function loadCollaborations(user) {
   const { data, error } = await supabase
     .from('collaborations')
@@ -63,19 +60,33 @@ async function loadCollaborations(user) {
   });
 }
 
-/* ──────────────────────────────────────────────
-   Recommended collaborations (matching function)
-─────────────────────────────────────────────── */
+/* ───────── Recommended (match_collaborations) ───────── */
 async function loadRecommendations(user) {
-  const { data, error } = await supabase
-    .rpc('match_collaborations', { p_user: user.id });   // ← Postgres function we created
-
-  // Container
   const container = document.createElement('div');
   container.innerHTML = '<h2>Recommended for You</h2>';
   document.body.appendChild(container);
 
-  if (error || !data || data.length === 0) {
+  const { data, error } = await supabase
+    .rpc('match_collaborations', { p_user: user.id });
+
+  /* ---- graceful fallback ---- */
+  if (error) {
+    if (error.code === '404') {
+      container.insertAdjacentHTML(
+        'beforeend',
+        '<p style="color:#888">Matching service is still being set up.</p>'
+      );
+    } else {
+      console.error('match_collaborations error:', error);
+      container.insertAdjacentHTML(
+        'beforeend',
+        '<p style="color:#d33">Error loading recommendations.</p>'
+      );
+    }
+    return;
+  }
+
+  if (!data || data.length === 0) {
     container.insertAdjacentHTML('beforeend', '<p>No matches yet.</p>');
     return;
   }
@@ -92,9 +103,7 @@ async function loadRecommendations(user) {
   });
 }
 
-/* ──────────────────────────────────────────────
-   Logout helper - exposed globally for nav link
-─────────────────────────────────────────────── */
+/* ───────── Logout helper ───────── */
 window.logout = async () => {
   await supabase.auth.signOut();
   window.location.href = 'login.html';
