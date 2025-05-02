@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Notifications – ColabFinder</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px}
+  .note{border:1px solid #ddd;border-radius:6px;padding:12px 16px;margin-bottom:10px}
+  .unread{background:#fff8e1}
+  button{margin-top:8px}
+</style></head><body>
+<h1>Notifications</h1>
+<div id="list">Loading…</div>
+<br><a href="dashboard.html">← Dashboard</a>
+
+<script type="module">
+import { supabase } from './supabaseClient.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data:{session} }=await supabase.auth.getSession();
+  if(!session) return location.href='login.html';
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending:false });
+  if(error){list.textContent='Error loading.';return;}
+
+  list.innerHTML='';
+  if(data.length===0){list.textContent='No notifications.';return;}
+
+  data.forEach(n=>{
+    const div=document.createElement('div');
+    div.className='note'+(n.is_read?'':' unread');
+    div.innerHTML=render(n);
+    list.appendChild(div);
+    div.querySelector('button')?.addEventListener('click',()=>markRead(n.id,div));
+  });
+});
+
+function render(n){
+  if(n.kind==='request'){
+    const { requester_id, collab_id } = n.payload;
+    return `<strong>New collaboration request</strong><br>
+            User <code>${requester_id.slice(0,6)}…</code> requested your collaboration
+            <code>${collab_id.slice(0,6)}…</code>.<br>
+            <em>${new Date(n.created_at).toLocaleString()}</em><br>
+            ${n.is_read?'':'<button>Mark as read</button>'}`;
+  }
+  return JSON.stringify(n);
+}
+
+async function markRead(id,node){
+  await supabase.from('notifications').update({is_read:true}).eq('id',id);
+  node.classList.remove('unread');
+  node.querySelector('button')?.remove();
+}
+</script></body></html>
