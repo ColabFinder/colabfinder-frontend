@@ -2,58 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Add Collaboration</title>
+  <title>Add New Collaboration</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
+  <script src="supabaseClient.js"></script>
 </head>
 <body>
-  <h2>Add a New Collaboration</h2>
+  <h1>Add a New Collaboration</h1>
+  <!-- Navigation -->
+  <p>
+    <a href="dashboard.html">← Back to Dashboard</a> | 
+    <a href="profile.html">Profile</a> | 
+    <a href="#" id="logout-link-add">Logout</a>
+  </p>
 
-  <label for="title">Title:</label><br />
-  <input type="text" id="title" placeholder="Enter collaboration title" /><br /><br />
+  <form id="collab-form">
+    <p>
+      <label>Title:<br>
+      <input type="text" id="collab-title" name="title" required></label>
+    </p>
+    <p>
+      <label>Description:<br>
+      <textarea id="collab-desc" name="description" rows="4" required></textarea></label>
+    </p>
+    <p>
+      <label>Type (e.g., Paid, Content Swap, Giveaway):<br>
+      <input type="text" id="collab-type" name="type" required></label>
+    </p>
+    <p>
+      <button type="submit">➕ Add Collaboration</button>
+      <a href="dashboard.html" style="margin-left: 1em;">Cancel</a>
+    </p>
+  </form>
 
-  <label for="description">Description:</label><br />
-  <textarea id="description" placeholder="Enter collaboration description"></textarea><br /><br />
-
-  <label for="type">Type (e.g., Paid, Content Swap, Giveaway):</label><br />
-  <input type="text" id="type" placeholder="Type of collaboration" /><br /><br />
-
-  <button id="addBtn">Add Collaboration</button><br /><br />
-
-  <a href="dashboard.html">← Back to Dashboard</a>
-
-  <!-- Use ES module for Supabase v2 -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-    const supabase = createClient(
-      'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-    );
-
-    document.getElementById('addBtn').addEventListener('click', async () => {
-      const title = document.getElementById('title').value.trim();
-      const description = document.getElementById('description').value.trim();
-      const type = document.getElementById('type').value.trim();
-
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError || !session) {
-        alert("You must be logged in to add a collaboration.");
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = supabase.auth.user();
+      if (!user) {
+        window.location.href = "index.html";
         return;
       }
-
-      const userId = session.user.id;
-
-      const { error } = await supabase
-        .from('collaborations')
-        .insert([{ user_id: userId, title, description, type }]);
-
-      if (error) {
-        console.error('Error adding collaboration:', error.message);
-        alert('Failed to add collaboration.');
-      } else {
-        alert('Collaboration added successfully!');
-        window.location.href = 'dashboard.html';
-      }
+      // Handle form submission to create collaboration
+      document.getElementById('collab-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('collab-title').value.trim();
+        const description = document.getElementById('collab-desc').value.trim();
+        const type = document.getElementById('collab-type').value.trim();
+        const { error } = await supabase.from('collaborations').insert({
+          title: title,
+          description: description,
+          type: type,
+          user_id: user.id
+        });
+        if (error) {
+          console.error("Add collaboration error:", error);
+          alert("Failed to add collaboration: " + error.message);
+        } else {
+          // Go back to dashboard to see the new collaboration
+          window.location.href = "dashboard.html";
+        }
+      });
+      // Logout link handler
+      document.getElementById('logout-link-add').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = "index.html";
+      });
     });
   </script>
 </body>
