@@ -1,60 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Edit Collaboration</title>
-</head>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Edit Profile</title></head>
 <body>
-  <h1>Edit Collaboration</h1>
+  <h1>Edit Profile</h1>
 
-  <form id="edit-collab">
-    <label>Title:<br><input type="text" id="title" required></label><br><br>
-    <label>Description:<br><textarea id="description" required></textarea></label><br><br>
-    <label>Type:<br><input type="text" id="type" required></label><br><br>
-    <button type="submit">Save Changes</button>
+  <form id="profile-form">
+    <label>Full name:<br><input id="full-name" required></label><br><br>
+    <label>Bio:<br><textarea id="bio"></textarea></label><br><br>
+    <label>Avatar URL:<br><input id="avatar-url"></label><br><br>
+    <label>Skills (comma-separated keywords):<br><input id="skills"></label><br><br>
+
+    <button type="submit">Save</button>
+    <button type="button" id="back">Cancel</button>
   </form>
 
-  <br><a href="dashboard.html">← Back to Dashboard</a>
-
-  <script type="module">
-    import { supabase } from './supabaseClient.js';
-
-    const id = new URLSearchParams(location.search).get('id');
-    if (!id) {
-      alert('No collaboration ID.');
-      location.href = 'dashboard.html';
-    }
-
-    const load = async () => {
-      const { data, error } = await supabase
-        .from('collaborations')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) return alert('Load failed');
-
-      document.getElementById('title').value = data.title;
-      document.getElementById('description').value = data.description;
-      document.getElementById('type').value = data.type;
-    };
-
-    document.getElementById('edit-collab').addEventListener('submit', async e => {
-      e.preventDefault();
-      const { error } = await supabase
-        .from('collaborations')
-        .update({
-          title: document.getElementById('title').value,
-          description: document.getElementById('description').value,
-          type: document.getElementById('type').value
-        })
-        .eq('id', id);
-
-      if (error) alert('Update failed');
-      else location.href = 'dashboard.html';
-    });
-
-    load();
-  </script>
-</body>
-</html>
+  <script type="module" src="./edit-profile-script.js"></script>
+</body></html>
