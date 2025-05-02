@@ -2,10 +2,12 @@
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Notifications – ColabFinder</title>
 <style>
-  body{font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px}
-  .note{border:1px solid #ddd;border-radius:6px;padding:12px 16px;margin-bottom:10px}
+  body{font-family:Arial,sans-serif;max-width:650px;margin:auto;padding:20px}
+  .note{border:1px solid #ddd;border-radius:6px;padding:12px 16px;margin-bottom:10px;display:grid;gap:10px}
   .unread{background:#fff8e1}
-  button{margin-top:8px}
+  .btn{background:#f6f6f6;border:1px solid #ccc;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:13px}
+  .accept{color:#060}.reject{color:#d33}
+  .meta{font-size:12px;color:#666}
 </style></head><body>
 <h1>Notifications</h1>
 <div id="list">Loading…</div>
@@ -14,44 +16,95 @@
 <script type="module">
 import { supabase } from './supabaseClient.js';
 
+let user;
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data:{session} }=await supabase.auth.getSession();
+  const { data:{session} } = await supabase.auth.getSession();
   if(!session) return location.href='login.html';
+  user = session.user;
 
+  await loadNotes();
+});
+
+/* ---------- Load all notifications ---------- */
+async function loadNotes(){
   const { data, error } = await supabase
     .from('notifications')
     .select('*')
-    .eq('user_id', session.user.id)
-    .order('created_at', { ascending:false });
+    .eq('user_id', user.id)
+    .order('created_at',{ascending:false});
+
+  const list = document.getElementById('list');
   if(error){list.textContent='Error loading.';return;}
 
   list.innerHTML='';
   if(data.length===0){list.textContent='No notifications.';return;}
 
-  data.forEach(n=>{
-    const div=document.createElement('div');
-    div.className='note'+(n.is_read?'':' unread');
-    div.innerHTML=render(n);
-    list.appendChild(div);
-    div.querySelector('button')?.addEventListener('click',()=>markRead(n.id,div));
-  });
-});
+  data.forEach(n=>render(n,list));
+}
 
-function render(n){
-  if(n.kind==='request'){
-    const { requester_id, collab_id } = n.payload;
-    return `<strong>New collaboration request</strong><br>
-            User <code>${requester_id.slice(0,6)}…</code> requested your collaboration
-            <code>${collab_id.slice(0,6)}…</code>.<br>
-            <em>${new Date(n.created_at).toLocaleString()}</em><br>
-            ${n.is_read?'':'<button>Mark as read</button>'}`;
+/* ---------- Render per-kind ---------- */
+function render(n, container){
+  const div=document.createElement('div');
+  div.className='note'+(n.is_read?'':' unread');
+  div.innerHTML=template(n);
+  container.appendChild(div);
+
+  /* Mark‑as‑read */
+  div.querySelector('.mark-read')?.addEventListener('click',()=>markRead(n.id,div));
+
+  /* Accept / Reject buttons for pending requests */
+  if(n.kind==='request' && !n.is_read){
+    const accept=div.querySelector('.accept');
+    const reject=div.querySelector('.reject');
+    accept.onclick=()=>updateRequest(n,'accepted',div);
+    reject.onclick=()=>updateRequest(n,'rejected',div);
   }
+}
+
+function template(n){
+  const ts = new Date(n.created_at).toLocaleString();
+  if(n.kind==='request'){
+    const { collab_id, requester_id } = n.payload;
+    return `
+      <div><strong>New collaboration request</strong></div>
+      <div class="meta">Collab: <code>${collab_id.slice(0,6)}…</code> |
+           From: <code>${requester_id.slice(0,6)}…</code> |
+           ${ts}</div>
+      <div>
+        <button class="btn accept">Accept</button>
+        <button class="btn reject">Reject</button>
+        <button class="btn mark-read">Mark as read</button>
+      </div>`;
+  }
+  if(n.kind==='request_status'){
+    const { collab_id, status } = n.payload;
+    return `
+      <div><strong>Your request was <span style="text-transform:capitalize">${status}</span></strong></div>
+      <div class="meta">Collab: <code>${collab_id.slice(0,6)}…</code> | ${ts}</div>
+      ${n.is_read?'':'<button class="btn mark-read">Mark as read</button>'}`;
+  }
+  /* fallback */
   return JSON.stringify(n);
 }
 
+/* ---------- Helpers ---------- */
 async function markRead(id,node){
   await supabase.from('notifications').update({is_read:true}).eq('id',id);
   node.classList.remove('unread');
-  node.querySelector('button')?.remove();
+  node.querySelectorAll('.mark-read').forEach(btn=>btn.remove());
+}
+
+async function updateRequest(note,status,node){
+  const { request_id } = note.payload;
+  const { error } = await supabase
+    .from('collab_requests')
+    .update({ status })
+    .eq('id', request_id);
+
+  if(error){alert('Update failed: '+error.message);return;}
+  /* Mark this notification read, inform user */
+  await supabase.from('notifications').update({is_read:true}).eq('id',note.id);
+  alert('Request '+status+'. Requester will be notified.');
+  await loadNotes();            // refresh list (handles status‑update note separately)
 }
 </script></body></html>
