@@ -3,11 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
+  <title>Dashboard – ColabFinder</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .collab { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
-    nav { margin-bottom: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    nav  { margin-bottom: 20px; }
+    .collab { border: 1px solid #ddd; padding: 10px 14px; margin-bottom: 10px;
+              display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
+    .collab-info { grid-column: 1 / span 1; }
+    .btn { background: none; border: none; cursor: pointer; font-size: 14px; }
+    .btn.edit { color: #0066cc; }
+    .btn.delete { color: #d33; }
   </style>
 </head>
 <body>
@@ -29,7 +34,7 @@
   <h2>Your Collaborations</h2>
   <div id="collab-list">Loading…</div>
 
-  <!-- Shared client + page logic -->
+  <!-- JS -->
   <script type="module" src="./dashboard-script.js"></script>
 </body>
 </html>
