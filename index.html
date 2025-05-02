@@ -1,36 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to ColabFinder</title>
+  <!-- Include Supabase scripts in the head or before closing body -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
+  <script src="supabaseClient.js"></script>
 </head>
 <body>
-    <h1>Welcome to ColabFinder</h1>
-    <button id="login-btn">Login with Google</button>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script>
-        // Initialize Supabase client
-        const supabase = Supabase.createClient('https://eqpmbcbaqgdmrhwmvlya.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM');
+  <h1>Welcome to ColabFinder</h1>
+  <p>
+    <button id="login-google">🔐 Login with Google</button>
+  </p>
 
-        // Check if the user is already logged in
-        document.addEventListener("DOMContentLoaded", () => {
-            const session = supabase.auth.session();
-            if (session) {
-                window.location.href = "dashboard.html";  // Redirect to dashboard if logged in
-            }
-        });
+  <script>
+    // Redirect already-authenticated users to dashboard
+    const sessionUser = supabase.auth.user();
+    if (sessionUser) {
+      window.location.href = "dashboard.html";
+    }
 
-        // Login with Google
-        document.getElementById("login-btn").addEventListener("click", async () => {
-            const { user, error } = await supabase.auth.signIn({ provider: "google" });
-            if (error) {
-                console.error("Error logging in with Google:", error.message);
-            } else {
-                window.location.href = "dashboard.html";  // Redirect to dashboard after login
-            }
-        });
-    </script>
+    // Login with Google OAuth on button click
+    document.getElementById('login-google').addEventListener('click', async () => {
+      const { error } = await supabase.auth.signIn(
+        { provider: 'google' },
+        { redirectTo: `${window.location.origin}/dashboard.html` }
+      );
+      if (error) {
+        alert("Login failed: " + error.message);
+      }
+      // On success, user will be redirected to Google and back to dashboard.html
+    });
+  </script>
 </body>
 </html>
