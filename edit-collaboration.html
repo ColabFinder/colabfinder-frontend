@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <title>Edit Collaboration – ColabFinder</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    label { font-weight: 600; }
+    body   { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    label  { font-weight: 600; }
     input, textarea { width: 100%; }
     textarea { height: 120px; }
     .danger { color: #d33; margin-top: 20px; border: 1px solid #d33; padding: 10px; border-radius: 6px; }
@@ -33,18 +33,25 @@
   <script type="module">
     import { supabase } from './supabaseClient.js';
 
+    /* -------- ensure owner‑update policy exists (run once in SQL):
+       create policy "Owner update collaboration"
+       on public.collaborations
+       for update
+       using (user_id = auth.uid());
+    ------------------------------------------ */
+
     const idParam = new URLSearchParams(location.search).get('id');
     if (!idParam) { alert('No collaboration ID.'); location.href = 'dashboard.html'; }
 
-    /* -------- element refs -------- */
-    const form        = document.getElementById('edit-collab');
-    const titleInput  = document.getElementById('title');
-    const descInput   = document.getElementById('description');
-    const typeInput   = document.getElementById('type');
-    const tagsInput   = document.getElementById('tags');
-    const deleteBtn   = document.getElementById('delete-btn');
+    /* element refs */
+    const form       = document.getElementById('edit-collab');
+    const titleInput = document.getElementById('title');
+    const descInput  = document.getElementById('description');
+    const typeInput  = document.getElementById('type');
+    const tagsInput  = document.getElementById('tags');
+    const deleteBtn  = document.getElementById('delete-btn');
 
-    /* -------- load existing data -------- */
+    /* load existing data */
     (async () => {
       const { data, error } = await supabase
         .from('collaborations')
@@ -60,25 +67,34 @@
       tagsInput.value  = (data.tags || []).join(', ');
     })();
 
-    /* -------- save / update -------- */
+    /* save / update */
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('collaborations')
         .update({
           title:       titleInput.value.trim(),
           description: descInput.value.trim(),
           type:        typeInput.value.trim(),
-          tags:        tagsInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+          tags:        tagsInput.value
+                         .split(',')
+                         .map(t => t.trim().toLowerCase())
+                         .filter(Boolean)
         })
-        .eq('id', idParam);
+        .eq('id', idParam)
+        .select();                       // returns updated row(s)
 
-      if (error) alert('Update failed: ' + error.message);
-      else location.href = 'dashboard.html';
+      if (error) {
+        alert('Update failed: ' + error.message);
+      } else if (data.length === 0) {
+        alert('No rows updated. Do you own this collaboration?');
+      } else {
+        location.href = 'dashboard.html';
+      }
     });
 
-    /* -------- delete -------- */
+    /* delete */
     deleteBtn.addEventListener('click', async () => {
       if (!confirm('Delete this collaboration?')) return;
 
