@@ -2,30 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Your Profile</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
-  <script src="supabaseClient.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Profile – ColabFinder</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    img  { border-radius: 50%; }
+  </style>
 </head>
 <body>
   <h1>Your Profile</h1>
-  <!-- Navigation (same as dashboard for consistency) -->
-  <p>
-    <a href="dashboard.html">Dashboard</a> | 
-    <a href="add-collaboration.html">Add Collaboration</a> | 
-    <a href="#" id="logout-link-profile">Logout</a>
-  </p>
 
-  <p><img id="profile-avatar-img" src="fallback-avatar.png" alt="User Avatar" width="100" height="100" /></p>
-  <p><strong>Full Name:</strong> <span id="view-full-name">Loading...</span></p>
-  <p><strong>Email:</strong> <span id="view-email">Loading...</span></p>
-  <p><strong>Bio:</strong> <span id="view-bio">Loading...</span></p>
-  <p><strong>Collab Type:</strong> <span id="view-collab-type">Loading...</span></p>
-  <p><strong>Skills:</strong> <span id="view-skills">Loading...</span></p>
-  <p><strong>Platforms:</strong> <span id="view-platforms">Loading...</span></p>
+  <img id="avatar" src="https://placehold.co/100x100" width="100" height="100" alt="Avatar" /><br><br>
 
-  <p><a href="edit-profile.html">✏️ Edit Profile</a></p>
+  <p><strong>Full Name:</strong> <span id="full-name">Loading…</span></p>
+  <p><strong>Email:</strong> <span id="email">Loading…</span></p>
+  <p><strong>Bio:</strong> <span id="bio">Loading…</span></p>
+  <p><strong>Skills:</strong> <span id="skills-list">Loading…</span></p>
 
-  <script src="profile-script.js"></script>
+  <a href="edit-profile.html">Edit Profile</a> |
+  <a href="dashboard.html">Dashboard</a> |
+  <a href="#" id="logout-btn">Logout</a>
+
+  <script type="module" src="./profile-script.js"></script>
 </body>
 </html>
