@@ -1,41 +1,37 @@
-// Initialize Supabase client at the top!
-const supabase = supabase.createClient(
-  'https://eqpmbcbaqgdmrhwmvlya.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM'
-);
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-
+// profile-script.js – Runs on profile.html to display the user's full profile info
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = supabase.auth.user();
   if (!user) {
-    window.location.href = "login.html";
+    window.location.href = "index.html";
     return;
   }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("full_name, email, bio, avatar_url")
-    .eq("user_id", user.id)
+  // Fetch profile data for the current user
+  let { data: profile, error } = await supabase
+    .from('profiles')
+    .select('full_name, email, bio, avatar_url, collab_type, skills, platforms')
+    .eq('id', user.id)
     .single();
-
-  if (error) {
-    console.error("Profile load error:", error.message);
+  if (error || !profile) {
+    console.error("Profile fetch error:", error);
+    alert("Unable to load profile information.");
     return;
   }
 
-  document.getElementById("full-name").textContent = data.full_name || "N/A";
-  document.getElementById("email").textContent = user.email || "N/A";
-  document.getElementById("bio").textContent = data.bio || "N/A";
+  // Update profile view fields
+  document.getElementById('view-full-name').textContent = profile.full_name || "(No name)";
+  document.getElementById('view-email').textContent = profile.email || user.email;
+  document.getElementById('view-bio').textContent = profile.bio || "(No bio)";
+  document.getElementById('view-collab-type').textContent = profile.collab_type || "(Not set)";
+  document.getElementById('view-skills').textContent = profile.skills || "(Not set)";
+  document.getElementById('view-platforms').textContent = profile.platforms || "(Not set)";
+  const avatarImg = document.getElementById('profile-avatar-img');
+  avatarImg.src = profile.avatar_url ? profile.avatar_url : "fallback-avatar.png";
 
-  const avatarImg = document.getElementById("avatar");
-  avatarImg.src = data.avatar_url || "https://placehold.co/100x100";
-  avatarImg.onerror = () => {
-    avatarImg.src = "https://placehold.co/100x100";
-  };
-});
-
-// Logout handler
-document.getElementById("logout-btn").addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  window.location.href = "login.html";
+  // Logout handler (for the logout link on this page)
+  document.getElementById('logout-link-profile').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await supabase.auth.signOut();
+    window.location.href = "index.html";
+  });
 });
