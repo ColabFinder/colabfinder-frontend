@@ -2,48 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Add Collaboration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Collaboration – ColabFinder</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    label { font-weight: 600; }
+    input, textarea { width: 100%; }
+    textarea { height: 120px; }
+  </style>
 </head>
 <body>
   <h2>Add a New Collaboration</h2>
 
+  <!-- Title -->
   <label for="title">Title:</label><br />
-  <input type="text" id="title" /><br /><br />
+  <input type="text" id="title" required /><br /><br />
 
+  <!-- Description -->
   <label for="description">Description:</label><br />
-  <textarea id="description"></textarea><br /><br />
+  <textarea id="description" required></textarea><br /><br />
 
+  <!-- Type -->
   <label for="type">Type (e.g., Paid, Content Swap, Giveaway):</label><br />
-  <input type="text" id="type" /><br /><br />
+  <input type="text" id="type" required /><br /><br />
 
-  <!-- only the form body changed -->
-<label>Tags (comma-separated keywords):</label><br />
-<input type="text" id="tags"><br /><br />
+  <!-- NEW: Tags -->
+  <label for="tags">Tags <small>(comma-separated keywords, e.g. <em>fitness, ugc video</em>)</small>:</label><br />
+  <input type="text" id="tags" /><br /><br />
 
+  <!-- Actions -->
   <button id="addBtn">Add Collaboration</button><br /><br />
   <a href="dashboard.html">← Back to Dashboard</a>
 
+  <!-- Logic -->
   <script type="module">
     import { supabase } from './supabaseClient.js';
 
     document.getElementById('addBtn').addEventListener('click', async () => {
-      const title = document.getElementById('title').value.trim();
+      // Grab & sanitise form inputs
+      const title       = document.getElementById('title').value.trim();
       const description = document.getElementById('description').value.trim();
-      const type = document.getElementById('type').value.trim();
+      const type        = document.getElementById('type').value.trim();
+      const tags        = document.getElementById('tags').value
+                            .split(',')
+                            .map(t => t.trim().toLowerCase())
+                            .filter(Boolean);           // remove empties
 
+      // Validate session
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('You must be logged in.');
-        return;
-      }
+      if (!session) { alert('You must be logged in.'); return; }
 
+      // Insert row
       const { error } = await supabase
         .from('collaborations')
-        .insert([{ user_id: session.user.id, title, description, type }]);
+        .insert([{
+          user_id: session.user.id,
+          title,
+          description,
+          type,
+          tags                                           // ← NEW COLUMN
+        }]);
 
       if (error) {
-        console.error(error);
-        alert('Failed to add collaboration.');
+        console.error(error); alert('Failed to add collaboration.');
       } else {
         window.location.href = 'dashboard.html';
       }
