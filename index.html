@@ -3,34 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to ColabFinder</title>
-  <!-- Include Supabase scripts in the head or before closing body -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
-  <script src="supabaseClient.js"></script>
+  <title>Login – ColabFinder</title>
 </head>
 <body>
   <h1>Welcome to ColabFinder</h1>
-  <p>
-    <button id="login-google">🔐 Login with Google</button>
-  </p>
+  <button id="login-btn">Login with Google</button>
 
-  <script>
-    // Redirect already-authenticated users to dashboard
-    const sessionUser = supabase.auth.user();
-    if (sessionUser) {
-      window.location.href = "dashboard.html";
-    }
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
 
-    // Login with Google OAuth on button click
-    document.getElementById('login-google').addEventListener('click', async () => {
-      const { error } = await supabase.auth.signIn(
-        { provider: 'google' },
-        { redirectTo: `${window.location.origin}/dashboard.html` }
-      );
-      if (error) {
-        alert("Login failed: " + error.message);
-      }
-      // On success, user will be redirected to Google and back to dashboard.html
+    // Auto-redirect if already logged in
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) window.location.href = 'dashboard.html';
+    });
+
+    // Google OAuth
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${location.origin}/dashboard.html` }
+      });
+      if (error) console.error('OAuth error:', error.message);
     });
   </script>
 </body>
