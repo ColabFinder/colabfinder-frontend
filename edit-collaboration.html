@@ -8,7 +8,7 @@
     label { font-weight: 600; }
     input, textarea { width: 100%; }
     textarea { height: 120px; }
-    .danger { color: #d33; margin-top: 20px; border: 1px solid #d33; padding: 10px; }
+    .danger { color: #d33; margin-top: 20px; border: 1px solid #d33; padding: 10px; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -18,7 +18,7 @@
     <label>Title:<br><input type="text" id="title" required></label><br><br>
     <label>Description:<br><textarea id="description" required></textarea></label><br><br>
     <label>Type:<br><input type="text" id="type" required></label><br><br>
-    <label>Tags:<br><input type="text" id="tags"></label><br><br>
+    <label>Tags (comma‑separated):<br><input type="text" id="tags"></label><br><br>
 
     <button type="submit">Save Changes</button>
   </form>
@@ -33,49 +33,63 @@
   <script type="module">
     import { supabase } from './supabaseClient.js';
 
-    const id = new URLSearchParams(location.search).get('id');
-    if (!id) { alert('No collaboration ID.'); location.href = 'dashboard.html'; }
+    const idParam = new URLSearchParams(location.search).get('id');
+    if (!idParam) { alert('No collaboration ID.'); location.href = 'dashboard.html'; }
 
-    /* Load data */
+    /* -------- element refs -------- */
+    const form        = document.getElementById('edit-collab');
+    const titleInput  = document.getElementById('title');
+    const descInput   = document.getElementById('description');
+    const typeInput   = document.getElementById('type');
+    const tagsInput   = document.getElementById('tags');
+    const deleteBtn   = document.getElementById('delete-btn');
+
+    /* -------- load existing data -------- */
     (async () => {
       const { data, error } = await supabase
         .from('collaborations')
         .select('*')
-        .eq('id', id)
+        .eq('id', idParam)
         .single();
 
-      if (error) { alert('Load failed'); return; }
+      if (error) { alert('Load failed: ' + error.message); return; }
 
-      title.value       = data.title;
-      description.value = data.description;
-      type.value        = data.type;
-      tags.value        = (data.tags || []).join(', ');
+      titleInput.value = data.title;
+      descInput.value  = data.description;
+      typeInput.value  = data.type;
+      tagsInput.value  = (data.tags || []).join(', ');
     })();
 
-    /* Save */
-    edit-collab.onsubmit = async e => {
+    /* -------- save / update -------- */
+    form.addEventListener('submit', async e => {
       e.preventDefault();
+
       const { error } = await supabase
         .from('collaborations')
         .update({
-          title:       title.value.trim(),
-          description: description.value.trim(),
-          type:        type.value.trim(),
-          tags:        tags.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+          title:       titleInput.value.trim(),
+          description: descInput.value.trim(),
+          type:        typeInput.value.trim(),
+          tags:        tagsInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
         })
-        .eq('id', id);
+        .eq('id', idParam);
 
-      if (error) alert('Update failed');
+      if (error) alert('Update failed: ' + error.message);
       else location.href = 'dashboard.html';
-    };
+    });
 
-    /* Delete */
-    delete-btn.onclick = async () => {
+    /* -------- delete -------- */
+    deleteBtn.addEventListener('click', async () => {
       if (!confirm('Delete this collaboration?')) return;
-      const { error } = await supabase.from('collaborations').delete().eq('id', id);
+
+      const { error } = await supabase
+        .from('collaborations')
+        .delete()
+        .eq('id', idParam);
+
       if (error) alert('Delete failed: ' + error.message);
       else location.href = 'dashboard.html';
-    };
+    });
   </script>
 </body>
 </html>
