@@ -1,47 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard – ColabFinder</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 840px; margin: auto; }
-    nav  { margin-bottom: 20px; }
-    .collab, .rec { border: 1px solid #ddd; padding: 12px 16px; margin-bottom: 10px; border-radius: 6px;
-                    display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
-    .info { grid-column: 1 / span 1; }
-    .btn   { background: none; border: none; font-size: 14px; cursor: pointer; }
-    .btn.edit   { color: #0066cc; }
-    .btn.delete { color: #d33; }
-    .load-more { background: #f6f6f6; border: 1px solid #ccc; padding: 8px 14px; cursor: pointer;
-                 border-radius: 6px; margin: 10px auto 30px; display: block; }
-  </style>
-</head>
-<body>
-  <h1>Welcome to Your Dashboard</h1>
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dashboard – ColabFinder</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:840px;margin:auto;padding:20px}
+  nav{margin-bottom:20px}
+  .collab,.rec{border:1px solid #ddd;padding:12px 16px;margin-bottom:10px;border-radius:6px;
+               display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center}
+  .info{grid-column:1/span 1}
+  .btn{background:none;border:none;cursor:pointer;font-size:14px}
+  .edit{color:#06c}.delete{color:#d33}.request{color:#0a0}
+  .load-more{background:#f6f6f6;border:1px solid #ccc;padding:8px 14px;border-radius:6px;
+             margin:10px auto 30px;display:block;cursor:pointer}
+  .badge{background:#d33;color:#fff;border-radius:12px;padding:0 6px;font-size:12px;margin-left:4px}
+</style></head><body>
+<h1>Welcome to Your Dashboard</h1>
 
-  <nav>
-    <a href="profile.html">Profile</a> |
-    <a href="add-collaboration.html">Add Collaboration</a> |
-    <a href="#" onclick="logout()">Logout</a>
-  </nav>
+<nav>
+  <a href="profile.html">Profile</a> |
+  <a href="notifications.html">Notifications<span id="notif-count"></span></a> |
+  <a href="add-collaboration.html">Add Collaboration</a> |
+  <a href="#" onclick="logout()">Logout</a>
+</nav>
 
-  <h2>Your Profile</h2>
-  <img id="avatar" src="https://placehold.co/100x100" width="100" height="100" alt="User Avatar" />
-  <p><strong>Full Name:</strong> <span id="full-name">Loading…</span></p>
-  <p><strong>Email:</strong> <span id="email">Loading…</span></p>
-  <p><strong>Bio:</strong> <span id="bio">Loading…</span></p>
-  <a href="edit-profile.html">Edit Profile</a>
+<h2>Your Profile</h2>
+<img id="avatar" src="https://placehold.co/100x100" width="100" height="100" alt="User Avatar"/>
+<p><strong>Full Name:</strong> <span id="full-name">Loading…</span></p>
+<p><strong>Email:</strong> <span id="email">Loading…</span></p>
+<p><strong>Bio:</strong> <span id="bio">Loading…</span></p>
+<a href="edit-profile.html">Edit Profile</a>
 
-  <h2>Your Collaborations</h2>
-  <div id="collab-list"></div>
-  <button id="collab-more" class="load-more" style="display:none">Load more collaborations</button>
+<h2>Your Collaborations</h2>
+<div id="collab-list"></div>
+<button id="collab-more" class="load-more" style="display:none">Load more collaborations</button>
 
-  <h2>Recommended for You</h2>
-  <div id="rec-list"></div>
-  <button id="rec-more" class="load-more" style="display:none">Load more recommendations</button>
+<h2>Recommended for You</h2>
+<div id="rec-list"></div>
+<button id="rec-more" class="load-more" style="display:none">Load more recommendations</button>
 
-  <!-- JS -->
-  <script type="module" src="./dashboard-script.js"></script>
-</body>
-</html>
+<script type="module" src="./dashboard-script.js"></script>
+</body></html>
