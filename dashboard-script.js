@@ -1,30 +1,38 @@
 /*****************************************************************
-  dashboard-script.js – full replacement (Delete Collaboration added)
+  dashboard-script.js – with pagination
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
+const PAGE_SIZE = 6;          // how many rows per fetch
+
+/* State */
+let collabPage = 0;
+let recPage    = 0;
+let user       = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    location.href = 'login.html';
-    return;
-  }
-  const user = session.user;
+  if (!session) return (location.href = 'login.html');
+  user = session.user;
 
-  await loadProfile(user);
-  await loadCollaborations(user);
-  await loadRecommendations(user);
+  await loadProfile();
+  await loadCollaborations();
+  await loadRecommendations();
+
+  /* Load‑more buttons */
+  document.getElementById('collab-more').onclick = loadCollaborations;
+  document.getElementById('rec-more').onclick    = loadRecommendations;
 });
 
 /* ───────── Profile ───────── */
-async function loadProfile(user) {
-  const { data, error } = await supabase
+async function loadProfile() {
+  const { data } = await supabase
     .from('profiles')
     .select('full_name, bio, avatar_url')
     .eq('user_id', user.id)
     .single();
 
-  if (error) return console.error(error);
+  if (!data) return;
 
   document.getElementById('full-name').textContent = data.full_name || '';
   document.getElementById('email').textContent     = user.email;
@@ -33,96 +41,119 @@ async function loadProfile(user) {
     data.avatar_url || 'https://placehold.co/100x100';
 }
 
-/* ───────── Your collaborations ───────── */
-async function loadCollaborations(user) {
-  const { data, error } = await supabase
+/* ───────── Your collaborations (paginated) ───────── */
+async function loadCollaborations() {
+  const from = collabPage * PAGE_SIZE;
+  const to   = from + PAGE_SIZE - 1;
+
+  const { data, error, count } = await supabase
     .from('collaborations')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(from, to);
 
+  if (error) return console.error(error);
+
+  renderCollabs(data);
+
+  collabPage++;
+  toggleMore('collab-more', collabPage * PAGE_SIZE < count);
+}
+
+function renderCollabs(rows) {
   const list = document.getElementById('collab-list');
-  list.innerHTML = '';
-
-  if (error || !data || data.length === 0) {
-    list.textContent = 'No collaborations found.';
-    return;
-  }
-
-  data.forEach(c => {
+  rows.forEach(c => {
     const div = document.createElement('div');
     div.className = 'collab';
 
     /* info */
-    const info = document.createElement('div');
-    info.className = 'collab-info';
-    info.innerHTML = `
-      <strong>${c.title}</strong><br/>
-      ${c.description}<br/>
-      <em>Type: ${c.type}</em>
+    div.innerHTML = `
+      <div class="info">
+        <strong>${c.title}</strong><br>
+        ${c.description}<br>
+        <em>Type: ${c.type}</em>
+      </div>
+      <button class="btn edit">Edit</button>
+      <button class="btn delete">Delete</button>
     `;
-    div.appendChild(info);
 
-    /* edit */
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn edit';
-    editBtn.textContent = 'Edit';
+    /* buttons */
+    const [editBtn, delBtn] = div.querySelectorAll('button');
     editBtn.onclick = () => location.href = `edit-collaboration.html?id=${c.id}`;
-    div.appendChild(editBtn);
-
-    /* delete */
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn delete';
-    delBtn.textContent = 'Delete';
-    delBtn.onclick = () => confirmDelete(c.id, div);
-    div.appendChild(delBtn);
+    delBtn.onclick  = () => confirmDelete(c.id, div);
 
     list.appendChild(div);
   });
 }
 
-/* Delete helper */
 async function confirmDelete(id, node) {
   if (!confirm('Delete this collaboration?')) return;
-  const { error } = await supabase.from('collaborations').delete().eq('id', id);
-  if (error) return alert('Delete failed: ' + error.message);
-  node.remove(); // instant UI feedback
-}
-
-/* ───────── Recommendations (unchanged) ───────── */
-async function loadRecommendations(user) {
-  const container = document.createElement('div');
-  container.innerHTML = '<h2>Recommended for You</h2>';
-  document.body.appendChild(container);
 
   const { data, error } = await supabase
-    .rpc('match_collaborations', { p_user: user.id });
+    .from('collaborations')
+    .delete()
+    .eq('id', id)
+    .select();
 
   if (error) {
-    container.insertAdjacentHTML('beforeend',
-      '<p style="color:#888">Matching service not available.</p>');
+    alert('Delete failed: ' + error.message);
+  } else {
+    node.remove();
+  }
+}
+
+/* ───────── Recommendations (paginated) ───────── */
+async function loadRecommendations() {
+  const from = recPage * PAGE_SIZE;
+  const to   = from + PAGE_SIZE - 1;
+
+  const { data, error } = await supabase
+    .rpc('match_collaborations', { p_user: user.id })
+    .range(from, to);
+
+  if (error) {
     console.error(error);
     return;
   }
 
-  if (!data || data.length === 0) {
-    container.insertAdjacentHTML('beforeend', '<p>No matches yet.</p>');
-    return;
+  renderRecs(data);
+
+  /* get total count only on first fetch to decide button visibility */
+  if (recPage === 0) {
+    const { data: totalRows } = await supabase
+      .rpc('match_collaborations', { p_user: user.id })
+      .select('id', { count: 'exact', head: true });
+    toggleMore('rec-more', PAGE_SIZE < (totalRows?.count || 0));
+  } else {
+    // after first page, just check the length
+    toggleMore('rec-more', data.length === PAGE_SIZE);
   }
 
-  data.forEach(c => {
+  recPage++;
+}
+
+function renderRecs(rows) {
+  const list = document.getElementById('rec-list');
+  rows.forEach(c => {
     const div = document.createElement('div');
-    div.className = 'collab';
+    div.className = 'rec';
     div.innerHTML = `
-      <strong>${c.title}</strong><br/>
-      ${c.description}<br/>
-      <em>Overlap score: ${c.overlap}</em>
+      <div class="info">
+        <strong>${c.title}</strong><br>
+        ${c.description}<br>
+        <em>Overlap score: ${c.overlap}</em>
+      </div>
     `;
-    container.appendChild(div);
+    list.appendChild(div);
   });
 }
 
-/* ───────── Logout ───────── */
+/* ───────── helpers ───────── */
+function toggleMore(btnId, show) {
+  document.getElementById(btnId).style.display = show ? 'block' : 'none';
+}
+
 window.logout = async () => {
   await supabase.auth.signOut();
   location.href = 'login.html';
