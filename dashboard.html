@@ -2,37 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Your Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
-  <script src="supabaseClient.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .collab { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+    nav { margin-bottom: 20px; }
+  </style>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
-  <!-- Navigation menu -->
-  <p>
-    <a href="profile.html">Profile</a> | 
-    <a href="add-collaboration.html">Add Collaboration</a> | 
-    <a href="#" id="logout-link">Logout</a>
-  </p>
+
+  <nav>
+    <a href="profile.html">Profile</a> |
+    <a href="add-collaboration.html">Add Collaboration</a> |
+    <a href="#" onclick="logout()">Logout</a>
+  </nav>
 
   <h2>Your Profile</h2>
-  <p>
-    <img id="avatar-img" src="fallback-avatar.png" alt="User Avatar" width="100" height="100" />
-  </p>
-  <p><strong>Full Name:</strong> <span id="profile-name">Loading...</span></p>
-  <p><strong>Email:</strong> <span id="profile-email">Loading...</span></p>
-  <p><strong>Bio:</strong> <span id="profile-bio">Loading...</span></p>
-  <p><a href="edit-profile.html">Edit Profile</a></p>
+  <img id="avatar" src="https://placehold.co/100x100" width="100" height="100" alt="User Avatar" />
+  <p><strong>Full Name:</strong> <span id="full-name">Loading…</span></p>
+  <p><strong>Email:</strong> <span id="email">Loading…</span></p>
+  <p><strong>Bio:</strong> <span id="bio">Loading…</span></p>
+  <a href="edit-profile.html">Edit Profile</a>
 
   <h2>Your Collaborations</h2>
-  <ul id="collab-list">
-    <li>Loading...</li>
-  </ul>
+  <div id="collab-list">Loading…</div>
 
-  <script src="dashboard-script.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
-<script src="supabaseClient.js"></script>
-<script src="your-page-specific-script.js"></script>
+  <!-- Shared client + page logic -->
+  <script type="module" src="./dashboard-script.js"></script>
 </body>
 </html>
