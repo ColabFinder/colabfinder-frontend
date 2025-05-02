@@ -1,22 +1,49 @@
 import { supabase } from './supabaseClient.js';
 
-document.getElementById('back').onclick = () => (location.href = 'dashboard.html');
+const form = document.getElementById('profile-form');
+const fullName = document.getElementById('full-name');
+const bio = document.getElementById('bio');
+const avatar = document.getElementById('avatar-url');
+const skills = document.getElementById('skills');
 
-document.getElementById('profile-form').addEventListener('submit', async e => {
-  e.preventDefault();
-
+// Load existing data
+(async () => {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return (location.href = 'login.html');
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (data) {
+    fullName.value = data.full_name || '';
+    bio.value = data.bio || '';
+    avatar.value = data.avatar_url || '';
+    skills.value = (data.skills || []).join(', ');
+  }
+})();
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const updates = {
     user_id: user.id,
-    full_name: document.getElementById('full-name').value,
-    bio: document.getElementById('bio').value,
-    avatar_url: document.getElementById('avatar-url').value,
+    full_name: fullName.value.trim(),
+    bio: bio.value.trim(),
+    avatar_url: avatar.value.trim(),
+    skills: skills.value
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean),
     updated_at: new Date()
   };
 
   const { error } = await supabase.from('profiles').upsert(updates);
-  if (error) alert('Update failed');
+  if (error) alert(error.message);
   else location.href = 'dashboard.html';
 });
+
+document.getElementById('back').onclick = () => history.back();
