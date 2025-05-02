@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Edit Profile</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Profile – ColabFinder</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    label { font-weight: 600; }
+    input, textarea { width: 100%; }
+    textarea { height: 120px; }
+  </style>
 </head>
 <body>
-  <h1>Edit Your Profile</h1>
-  <form id="profile-form">
-    <label>Full Name: <input type="text" id="full-name"></label><br>
-    <label>Bio: <input type="text" id="bio"></label><br>
-    <label>Avatar URL: <input type="text" id="avatar-url"></label><br>
-    <button type="submit">Save</button>
-  </form>
-  <button id="back">Back to Dashboard</button>
+  <h1>Edit Profile</h1>
 
-  <script type="module" src="edit-profile-script.js"></script>
+  <form id="profile-form">
+    <label>Full name:<br><input id="full-name" required></label><br><br>
+    <label>Bio:<br><textarea id="bio"></textarea></label><br><br>
+    <label>Avatar URL:<br><input id="avatar-url"></label><br><br>
+    <label>Skills (comma-separated keywords):<br><input id="skills"></label><br><br>
+
+    <button type="submit">Save</button>
+    <button type="button" id="back">Cancel</button>
+  </form>
+
+  <!-- Wait until DOM is ready inside the script -->
+  <script type="module" src="./edit-profile-script.js"></script>
 </body>
 </html>
