@@ -2,55 +2,96 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Edit Profile</title>
+  <title>Edit Collaboration</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.8"></script>
   <script src="supabaseClient.js"></script>
 </head>
 <body>
-  <h1>Edit Your Profile</h1>
+  <h1>Edit Collaboration</h1>
   <!-- Navigation -->
   <p>
-    <a href="dashboard.html">Dashboard</a> | 
-    <a href="add-collaboration.html">Add Collaboration</a> | 
-    <a href="#" id="logout-link-edit">Logout</a>
+    <a href="dashboard.html">← Back to Dashboard</a> | 
+    <a href="profile.html">Profile</a> | 
+    <a href="#" id="logout-link-editcol">Logout</a>
   </p>
 
-  <form id="profile-form">
+  <form id="edit-collab-form">
     <p>
-      <label>Full Name:<br>
-      <input type="text" id="input-full-name" name="full_name" required></label>
+      <label>Title:<br>
+      <input type="text" id="edit-title" name="title" required></label>
     </p>
     <p>
-      <label>Email:<br>
-      <input type="email" id="input-email" name="email" required></label>
+      <label>Description:<br>
+      <textarea id="edit-desc" name="description" rows="4" required></textarea></label>
     </p>
     <p>
-      <label>Bio:<br>
-      <textarea id="input-bio" name="bio" rows="3"></textarea></label>
+      <label>Type:<br>
+      <input type="text" id="edit-type" name="type" required></label>
     </p>
     <p>
-      <label>Avatar URL (link to your image):<br>
-      <input type="url" id="input-avatar_url" name="avatar_url"></label>
-    </p>
-    <p>
-      <label>Collab Type (e.g., Paid, Content Swap):<br>
-      <input type="text" id="input-collab_type" name="collab_type"></label>
-    </p>
-    <p>
-      <label>Skills:<br>
-      <input type="text" id="input-skills" name="skills" placeholder="e.g., Video Editing, Marketing"></label>
-    </p>
-    <p>
-      <label>Platforms:<br>
-      <input type="text" id="input-platforms" name="platforms" placeholder="e.g., YouTube, Instagram"></label>
-    </p>
-    <p>
-      <button type="submit">💾 Save Profile</button>
-      <a href="profile.html" style="margin-left: 1em;">Cancel</a>
+      <button type="submit">💾 Save Changes</button>
+      <a href="dashboard.html" style="margin-left: 1em;">Cancel</a>
     </p>
   </form>
 
-  <script src="edit-profile-script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = supabase.auth.user();
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      // Parse collaboration ID from URL query string (e.g., ?id=xxxxxxxx)
+      const params = new URLSearchParams(window.location.search);
+      const collabId = params.get('id');
+      if (!collabId) {
+        alert("No collaboration ID provided.");
+        window.location.href = "dashboard.html";
+        return;
+      }
+      // Fetch the collaboration to edit
+      let { data: collab, error } = await supabase
+        .from('collaborations')
+        .select('id, title, description, type')
+        .eq('id', collabId)
+        .single();
+      if (error || !collab) {
+        alert("Error loading collaboration details.");
+        window.location.href = "dashboard.html";
+        return;
+      }
+      // Prefill form fields
+      document.getElementById('edit-title').value = collab.title || "";
+      document.getElementById('edit-desc').value = collab.description || "";
+      document.getElementById('edit-type').value = collab.type || "";
+
+      // Submit handler to update the collaboration
+      document.getElementById('edit-collab-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newTitle = document.getElementById('edit-title').value.trim();
+        const newDesc = document.getElementById('edit-desc').value.trim();
+        const newType = document.getElementById('edit-type').value.trim();
+        const { error: updateErr } = await supabase
+          .from('collaborations')
+          .update({ title: newTitle, description: newDesc, type: newType })
+          .eq('id', collabId)
+          .eq('user_id', user.id);  // ensure user owns the collab (for safety)
+        if (updateErr) {
+          console.error("Update collaboration error:", updateErr);
+          alert("Failed to save changes: " + updateErr.message);
+        } else {
+          window.location.href = "dashboard.html";
+        }
+      });
+
+      // Logout link
+      document.getElementById('logout-link-editcol').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = "index.html";
+      });
+    });
+  </script>
 </body>
 </html>
