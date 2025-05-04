@@ -1,49 +1,52 @@
 /*****************************************************************
-  dashboard-script.js  –  pagination + request + notifications
-  (now using explicit getElementById for every element)
+  ColabFinder Dashboard
+  • Profile, CRUD, pagination                          (unchanged)
+  • Exact-tag recommendations                          (loadExactRecs)
+  • NEW: Semantic (vector) recommendations (OpenAI)    (loadVectorRecs)
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
 const PAGE_SIZE = 6;
 let collabPage = 0;
-let recPage    = 0;
-let user       = null;
+let exactRecPage = 0;
+let user = null;
 
-/* cache DOM refs once */
+/* ---------- cache DOM refs ---------- */
 const dom = {
-  fullName:  document.getElementById('full-name'),
-  email:     document.getElementById('email'),
-  bio:       document.getElementById('bio'),
-  avatar:    document.getElementById('avatar'),
-  collabList:document.getElementById('collab-list'),
-  collabMore:document.getElementById('collab-more'),
-  recList:   document.getElementById('rec-list'),
-  recMore:   document.getElementById('rec-more'),
-  notifBadge:document.getElementById('notif-count')
+  fullName:   document.getElementById('full-name'),
+  email:      document.getElementById('email'),
+  bio:        document.getElementById('bio'),
+  avatar:     document.getElementById('avatar'),
+  collabList: document.getElementById('collab-list'),
+  collabMore: document.getElementById('collab-more'),
+  recList:    document.getElementById('rec-list'),
+  recMore:    document.getElementById('rec-more'),
+  notifBadge: document.getElementById('notif-count')
 };
 
+/* ---------- entry ---------- */
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = (await supabase.auth.getSession()).data.session;
   if (!session) return (location.href = 'login.html');
   user = session.user;
 
   await loadProfile();
   await loadCollaborations();
-  await loadRecommendations();
+  await loadExactRecs();
+  await loadVectorRecs();            // semantic recommendations
   await loadUnreadCount();
 
   dom.collabMore.onclick = loadCollaborations;
-  dom.recMore.onclick    = loadRecommendations;
+  dom.recMore.onclick    = loadExactRecs;
 });
 
-/* ───────── profile ───────── */
+/* ---------- profile ---------- */
 async function loadProfile() {
   const { data } = await supabase
     .from('profiles')
     .select('full_name,bio,avatar_url')
     .eq('user_id', user.id)
     .single();
-
   if (!data) return;
 
   dom.fullName.textContent = data.full_name || '';
@@ -52,7 +55,7 @@ async function loadProfile() {
   dom.avatar.src           = data.avatar_url || 'https://placehold.co/100x100';
 }
 
-/* ───────── collaborations (paginated) ───────── */
+/* ---------- collaborations (pagination) ---------- */
 async function loadCollaborations() {
   const { data, count, error } = await supabase
     .from('collaborations')
@@ -62,7 +65,6 @@ async function loadCollaborations() {
     .range(collabPage * PAGE_SIZE, collabPage * PAGE_SIZE + PAGE_SIZE - 1);
 
   if (error) return console.error(error);
-
   renderCollabs(data);
   collabPage++;
   dom.collabMore.style.display =
@@ -91,40 +93,68 @@ async function confirmDelete(id, node) {
   else node.remove();
 }
 
-/* ───────── recommendations (paginated) ───────── */
-async function loadRecommendations() {
+/* ---------- exact-tag recommendations (pagination) ---------- */
+async function loadExactRecs() {
   const { data, error } = await supabase
     .rpc('match_collaborations', { p_user: user.id })
-    .range(recPage * PAGE_SIZE, recPage * PAGE_SIZE + PAGE_SIZE - 1);
+    .range(exactRecPage * PAGE_SIZE, exactRecPage * PAGE_SIZE + PAGE_SIZE - 1);
 
   if (error) { console.error(error); return; }
+
+  data.forEach(renderExactRec);
+  dom.recMore.style.display = data.length === PAGE_SIZE ? 'block' : 'none';
+  exactRecPage++;
+}
+
+function renderExactRec(c) {
+  const div = document.createElement('div');
+  div.className = 'rec';
+  div.innerHTML = `
+    <div class="info"><strong>${c.title}</strong><br>${c.description}<br><em>Overlap: ${c.overlap}</em></div>
+    <button class="btn request">Request</button>`;
+  div.querySelector('.request').onclick = () => sendRequest(c.id, c.title);
+  dom.recList.appendChild(div);
+}
+
+/* ---------- NEW semantic recommendations (top 6 once) ---------- */
+async function loadVectorRecs() {
+  const { data, error } = await supabase
+    .rpc('match_collaborations_semantic', { p_user: user.id, top_n: 6 });
+  if (error) { console.error(error); return; }
+  if (!data || data.length === 0) return;   // nothing to show
+
+  // create a heading & list container
+  const heading = document.createElement('h2');
+  heading.textContent = 'Recommended for You (smart)';
+  const list = document.createElement('div');
+  list.id = 'vector-rec-list';
+  document.body.appendChild(heading);
+  document.body.appendChild(list);
 
   data.forEach(c => {
     const div = document.createElement('div');
     div.className = 'rec';
     div.innerHTML = `
-      <div class="info"><strong>${c.title}</strong><br>${c.description}<br><em>Overlap: ${c.overlap}</em></div>
+      <div class="info"><strong>${c.title}</strong><br>${c.description}<br><em>Similarity: ${c.score.toFixed(2)}</em></div>
       <button class="btn request">Request</button>`;
     div.querySelector('.request').onclick = () => sendRequest(c.id, c.title);
-    dom.recList.appendChild(div);
+    list.appendChild(div);
   });
-
-  dom.recMore.style.display = data.length === PAGE_SIZE ? 'block' : 'none';
-  recPage++;
 }
 
+/* ---------- send collab request ---------- */
 async function sendRequest(collabId, title) {
-  const message = prompt(`Request "${title}" – add a note for the owner (optional):`);
+  const note = prompt(`Request "${title}" – add a note (optional):`);
   const { error } = await supabase.from('collab_requests').insert([{
     collab_id: collabId,
     requester_id: user.id,
-    message
+    message: note
   }]);
   if (error) alert('Request failed: ' + error.message);
-  else { alert('Request sent!'); loadUnreadCount(); }
+  else alert('Request sent!');
 }
 
-/* ───────── notifications badge ───────── */
+/* ---------- notifications badge ---------- */
 async function loadUnreadCount() {
   const { count } = await supabase
     .from('notifications')
@@ -135,7 +165,7 @@ async function loadUnreadCount() {
   dom.notifBadge.textContent = count > 0 ? ` (${count})` : '';
 }
 
-/* ───────── logout ───────── */
+/* ---------- logout ---------- */
 window.logout = async () => {
   await supabase.auth.signOut();
   location.href = 'login.html';
