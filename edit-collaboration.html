@@ -18,7 +18,7 @@
     <label>Title:<br><input type="text" id="title" required></label><br><br>
     <label>Description:<br><textarea id="description" required></textarea></label><br><br>
     <label>Type:<br><input type="text" id="type" required></label><br><br>
-    <label>Tags (comma‑separated):<br><input type="text" id="tags"></label><br><br>
+    <label>Tags (comma-separated):<br><input type="text" id="tags"></label><br><br>
 
     <button type="submit">Save Changes</button>
   </form>
@@ -32,13 +32,6 @@
 
   <script type="module">
     import { supabase } from './supabaseClient.js';
-
-    /* -------- ensure owner‑update policy exists (run once in SQL):
-       create policy "Owner update collaboration"
-       on public.collaborations
-       for update
-       using (user_id = auth.uid());
-    ------------------------------------------ */
 
     const idParam = new URLSearchParams(location.search).get('id');
     if (!idParam) { alert('No collaboration ID.'); location.href = 'dashboard.html'; }
@@ -58,7 +51,6 @@
         .select('*')
         .eq('id', idParam)
         .single();
-
       if (error) { alert('Load failed: ' + error.message); return; }
 
       titleInput.value = data.title;
@@ -71,33 +63,27 @@
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('collaborations')
         .update({
           title:       titleInput.value.trim(),
           description: descInput.value.trim(),
           type:        typeInput.value.trim(),
-          tags:        tagsInput.value
-                         .split(',')
-                         .map(t => t.trim().toLowerCase())
-                         .filter(Boolean)
+          tags:        tagsInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
         })
-        .eq('id', idParam)
-        .select();                       // returns updated row(s)
+        .eq('id', idParam);
 
-      if (error) {
-        alert('Update failed: ' + error.message);
-      } else if (data.length === 0) {
-        alert('No rows updated. Do you own this collaboration?');
-      } else {
-        location.href = 'dashboard.html';
-      }
+      if (error) { alert('Update failed: ' + error.message); return; }
+
+      /* ---- NEW: kick off vector embedding ---- */
+      await fetch('/functions/v1/batch-embed', { method: 'POST' });
+
+      location.href = 'dashboard.html';
     });
 
     /* delete */
     deleteBtn.addEventListener('click', async () => {
       if (!confirm('Delete this collaboration?')) return;
-
       const { error } = await supabase
         .from('collaborations')
         .delete()
