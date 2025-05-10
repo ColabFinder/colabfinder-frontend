@@ -1,54 +1,58 @@
+/*****************************************************************
+  edit-profile-script.js – full replacement
+  • Loads current profile
+  • Saves edits
+  • NEW: triggers /functions/v1/batch-embed after save
+*****************************************************************/
 import { supabase } from './supabaseClient.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const form     = document.getElementById('profile-form');
-  const fullName = document.getElementById('full-name');
-  const bio      = document.getElementById('bio');
-  const avatar   = document.getElementById('avatar-url');
-  const skills   = document.getElementById('skills');
+/* ---------- element refs ---------- */
+const fullName = document.getElementById('full-name');
+const bio      = document.getElementById('bio');
+const skills   = document.getElementById('skills');
+const avatar   = document.getElementById('avatar-url');
+const form     = document.getElementById('edit-profile');
 
-  /* ---------- load existing data ---------- */
-  (async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return (location.href = 'login.html');
+/* ---------- load existing data ---------- */
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return (location.href = 'login.html');
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .single();
+  if (error) { alert('Load failed'); return; }
 
-    if (error || !data) return;        // first-time user; fields stay empty
+  fullName.value = data.full_name ?? '';
+  bio.value      = data.bio ?? '';
+  skills.value   = (data.skills ?? []).join(', ');
+  avatar.value   = data.avatar_url ?? '';
+})();
 
-    fullName.value = data.full_name   || '';
-    bio.value      = data.bio         || '';
-    avatar.value   = data.avatar_url  || '';
-    skills.value   = (data.skills     || []).join(', ');
-  })();
+/* ---------- save edits ---------- */
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return alert('Session expired, please log in again.');
 
-  /* ---------- save / upsert ---------- */
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const updates = {
+    full_name: fullName.value.trim(),
+    bio:       bio.value.trim(),
+    skills:    skills.value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    avatar_url: avatar.value.trim()
+  };
 
-    const updates = {
-      user_id:    user.id,
-      full_name:  fullName.value.trim(),
-      bio:        bio.value.trim(),
-      avatar_url: avatar.value.trim(),
-      skills:     skills.value
-                    .split(',')
-                    .map(s => s.trim().toLowerCase())
-                    .filter(Boolean),
-      updated_at: new Date()
-    };
+  const { error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('user_id', session.user.id);
 
-    const { error } = await supabase.from('profiles').upsert(updates);
-    if (error) alert('Update failed: ' + error.message);
-    else location.href = 'dashboard.html';
-  });
+  if (error) return alert('Save failed: ' + error.message);
 
-  /* ---------- cancel button ---------- */
-  document.getElementById('back').onclick = () => history.back();
+  /* ---- NEW: kick off vector embedding ---- */
+  await fetch('/functions/v1/batch-embed', { method: 'POST' });
+
+  location.href = 'dashboard.html';
 });
