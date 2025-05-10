@@ -1,8 +1,8 @@
 /*****************************************************************
   edit-profile-script.js – full replacement
   • Loads current profile
-  • Saves edits
-  • NEW: triggers /functions/v1/batch-embed after save
+  • Upserts edits (creates or updates row)
+  • Fires /functions/v1/batch-embed after save
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
@@ -23,36 +23,43 @@ const form     = document.getElementById('edit-profile');
     .select('*')
     .eq('user_id', session.user.id)
     .single();
-  if (error) { alert('Load failed'); return; }
 
-  fullName.value = data.full_name ?? '';
-  bio.value      = data.bio ?? '';
-  skills.value   = (data.skills ?? []).join(', ');
-  avatar.value   = data.avatar_url ?? '';
+  if (error && error.code !== 'PGRST116') {      // ignore "row not found"
+    alert('Load failed'); return;
+  }
+
+  if (data) {
+    fullName.value = data.full_name ?? '';
+    bio.value      = data.bio ?? '';
+    skills.value   = (data.skills ?? []).join(', ');
+    avatar.value   = data.avatar_url ?? '';
+  }
 })();
 
-/* ---------- save edits ---------- */
+/* ---------- save / upsert ---------- */
 form.addEventListener('submit', async e => {
   e.preventDefault();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return alert('Session expired, please log in again.');
 
-  const updates = {
-    full_name: fullName.value.trim(),
-    bio:       bio.value.trim(),
-    skills:    skills.value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+  const payload = {
+    user_id:    session.user.id,                         // required for upsert
+    full_name:  fullName.value.trim(),
+    bio:        bio.value.trim(),
+    skills:     skills.value.split(',')
+                   .map(s => s.trim().toLowerCase())
+                   .filter(Boolean),
     avatar_url: avatar.value.trim()
   };
 
   const { error } = await supabase
     .from('profiles')
-    .update(updates)
-    .eq('user_id', session.user.id);
+    .upsert(payload, { onConflict: 'user_id' });         // create or update
 
   if (error) return alert('Save failed: ' + error.message);
 
-  /* ---- NEW: kick off vector embedding ---- */
-  await fetch('/functions/v1/batch-embed', { method: 'POST' });
+  /* ---- kick off vector embedding ---- */
+  fetch('/functions/v1/batch-embed', { method: 'POST' }); // fire-and-forget
 
   location.href = 'dashboard.html';
 });
