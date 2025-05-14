@@ -1,0 +1,19 @@
+name: Mail-worker cron
+
+on:
+  schedule:
+    # every 10 minutes — adjust to your liking
+    - cron: '*/10 * * * *'
+  workflow_dispatch:        # lets you run it manually from the Actions tab
+
+jobs:
+  run-mail-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call mail-worker
+        run: |
+          curl -s -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE }}" \
+            https://eqpmbcbaqgdmrhwmvlya.supabase.co/functions/v1/mail-worker \
+            || exit 1
