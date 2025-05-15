@@ -2,27 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Profile – ColabFinder</title>
+  <title>Creator Profile – ColabFinder</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    img  { border-radius: 50%; }
+    body { font-family: sans-serif; margin: 20px; max-width: 800px; }
+    nav  { margin-bottom: 24px; }
+    .avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; }
+    .collab { border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin: 12px 0; }
+    button { cursor: pointer; }
   </style>
 </head>
 <body>
-  <h1>Your Profile</h1>
 
-  <img id="avatar" src="https://placehold.co/100x100" width="100" height="100" alt="Avatar" /><br><br>
+  <!-- simple header -->
+  <nav>
+    <a href="dashboard.html">Dashboard</a> |
+    <a href="notifications.html">Notifications</a> |
+    <a href="add-collaboration.html">Add Collaboration</a>
+  </nav>
 
-  <p><strong>Full Name:</strong> <span id="full-name">Loading…</span></p>
-  <p><strong>Email:</strong> <span id="email">Loading…</span></p>
-  <p><strong>Bio:</strong> <span id="bio">Loading…</span></p>
-  <p><strong>Skills:</strong> <span id="skills-list">Loading…</span></p>
+  <!-- profile info -->
+  <section>
+    <img id="avatar" class="avatar" src="fallback-avatar.png" alt="Avatar" />
+    <h2 id="full-name">Name loading…</h2>
+    <p id="bio"></p>
+  </section>
 
-  <a href="edit-profile.html">Edit Profile</a> |
-  <a href="dashboard.html">Dashboard</a> |
-  <a href="#" id="logout-btn">Logout</a>
+  <!-- collaborations -->
+  <h3>Collaborations</h3>
+  <div id="collab-list"></div>
 
+  <!-- Supabase client + page logic -->
+  <script type="module" src="./supabaseClient.js"></script>
   <script type="module" src="./profile-script.js"></script>
 </body>
 </html>
