@@ -1,59 +1,72 @@
 /*****************************************************************
-  profile-script.js
-  • Reads ?u=<uuid> from URL
-  • Loads that user’s profile + collaborations
-  • Shows “Request” buttons that insert collab_requests
+  profile-script.js – self-fallback version
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
 const params   = new URLSearchParams(window.location.search);
-const targetId = params.get('u');                     // UUID in URL
-if (!targetId) {
-  alert('Missing user id (?u=)');
-  location.href = 'dashboard.html';
-}
+let   targetId = params.get('u');          // ?u=<uuid>
 
-/* ---------- load profile ---------- */
 (async () => {
-  const { data, error } = await supabase
+  /* ---------- fallback: use current user ---------- */
+  if (!targetId) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      alert('Please log in.');
+      return location.href = 'login.html';
+    }
+    targetId = session.user.id;
+  }
+
+  /* ---------- load profile ---------- */
+  const { data: profile, error: pErr } = await supabase
     .from('profiles')
     .select('full_name,bio,avatar_url')
     .eq('user_id', targetId)
     .single();
 
-  if (error || !data) return alert('Profile not found.');
+  if (pErr || !profile) {
+    alert('Profile not found.');
+    return location.href = 'dashboard.html';
+  }
 
-  document.getElementById('full-name').textContent = data.full_name;
-  document.getElementById('bio').textContent       = data.bio ?? '';
-  document.getElementById('avatar').src            = data.avatar_url || 'fallback-avatar.png';
-})();
+  document.getElementById('full-name').textContent = profile.full_name;
+  document.getElementById('bio').textContent       = profile.bio ?? '';
+  document.getElementById('avatar').src            = profile.avatar_url || 'fallback-avatar.png';
 
-/* ---------- load collaborations ---------- */
-(async () => {
+  /* ---------- load collaborations ---------- */
   const list = document.getElementById('collab-list');
-  const { data, error } = await supabase
+  const { data: collabs, error: cErr } = await supabase
     .from('collaborations')
     .select('id,title,description,type')
     .eq('user_id', targetId)
     .order('created_at', { ascending: false });
 
-  if (error) { console.error(error); return; }
+  if (cErr) { console.error(cErr); return; }
 
-  data.forEach(c => {
+  collabs.forEach(c => {
     const el = document.createElement('div');
     el.className = 'collab';
     el.innerHTML = `
       <h4>${c.title}</h4>
       <p>${c.description}</p>
       <p><small>Type: ${c.type}</small></p>
-      <button data-id="${c.id}">Request</button>
+      ${
+        sessionOwnsProfile(session, targetId)
+          ? ''                                  // hide Request on own profile
+          : `<button data-id="${c.id}">Request</button>`
+      }
     `;
-    el.querySelector('button').onclick = () => handleRequest(c.id);
+    const btn = el.querySelector('button');
+    if (btn) btn.onclick = () => handleRequest(c.id);
     list.appendChild(el);
   });
 })();
 
-/* ---------- handle Request click ---------- */
+/* ---------- helpers ---------- */
+function sessionOwnsProfile(session, id) {
+  return session && session.user && session.user.id === id;
+}
+
 async function handleRequest(collabId) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return alert('Please log in first.');
@@ -67,7 +80,7 @@ async function handleRequest(collabId) {
 
   if (error) { alert('Failed: ' + error.message); return; }
 
-  /* fire real-time e-mail via worker */
+  /* real-time mail */
   supabase.functions.invoke('mail-worker');
 
   alert('Request sent!');
