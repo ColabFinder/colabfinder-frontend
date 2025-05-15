@@ -1,0 +1,17 @@
+name: Daily digest cron
+
+on:
+  schedule:
+    - cron:  '0 13 * * *'   # 13:00 UTC = 8 AM New York
+  workflow_dispatch:
+
+jobs:
+  run-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call digest-worker
+        run: |
+          curl -s -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE }}" \
+            https://eqpmbcbaqgdmrhwmvlya.supabase.co/functions/v1/digest-worker
