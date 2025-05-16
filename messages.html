@@ -1,6 +1,9 @@
 <!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8"><title>Messages – ColabFinder</title>
   <link rel="stylesheet" href="styles.css">
+  <style>.thread{display:flex;align-items:center;margin:12px 0;}
+         .thread img{width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;}
+  </style>
 </head><body>
 <div id="global-header"></div>
 
@@ -13,28 +16,45 @@
 import { supabase } from './supabaseClient.js';
 
 const inbox = document.getElementById('inbox');
-const { data: { session } } = await supabase.auth.getSession();
-if(!session) { location.href='login.html'; throw ''; }
-const myId=session.user.id;
+const { data:{session} } = await supabase.auth.getSession();
+if(!session){ location.href='login.html'; throw ''; }
+const myId = session.user.id;
 
-/* load last msg per conversation */
-const { data, error } = await supabase
+/* 1. load last message per conversation */
+const { data: threads, error } = await supabase
   .from('inbox')
   .select('*')
   .or(`sender_id.eq.${myId},recipient_id.eq.${myId}`)
   .order('created_at', { ascending:false });
 
-if(error){ inbox.textContent='Error'; console.error(error); }
+if(error){ inbox.textContent='Error'; console.error(error); throw ''; }
+if(!threads.length){ inbox.textContent='No messages yet'; }
 
-data.forEach(row=>{
-  const other = row.sender_id === myId ? row.recipient_id : row.sender_id;
-  const snippet = row.body.length>40? row.body.slice(0,40)+'…' : row.body;
+/* 2. fetch profile data for all “other” users */
+const otherIds = [...new Set(threads.map(t => 
+  t.sender_id === myId ? t.recipient_id : t.sender_id ))];
+
+const { data: profiles } = await supabase
+  .from('profiles')
+  .select('user_id,full_name,avatar_url')
+  .in('user_id', otherIds);
+
+const profMap = Object.fromEntries(profiles.map(p=>[p.user_id,p]));
+
+/* 3. render inbox */
+threads.forEach(t=>{
+  const other = t.sender_id === myId ? t.recipient_id : t.sender_id;
+  const profile = profMap[other] || {};
+  const snippet = t.body.length>50 ? t.body.slice(0,50)+'…' : t.body;
+
   inbox.insertAdjacentHTML('beforeend',`
-    <div class="collab">
-      <a href="chat.html?u=${other}">
-        <b>${row.created_at.slice(0,10)}</b> – ${snippet}
-      </a>
-    </div>`);
+    <a class="thread" href="chat.html?u=${other}">
+      <img src="${profile.avatar_url||'fallback-avatar.png'}">
+      <div>
+        <b>${profile.full_name||'Unknown'}</b><br>
+        <small>${snippet}</small>
+      </div>
+    </a>`);
 });
 </script>
 </body></html>
