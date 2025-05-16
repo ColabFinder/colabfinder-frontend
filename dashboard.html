@@ -1,47 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Dashboard – ColabFinder</title>
-  <style>
-    body { font-family: sans-serif; margin: 20px; max-width: 800px; }
-    h2  { margin-top: 40px; }
-    .rec-card { border: 1px solid #ccc; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
-    button { cursor: pointer; }
-  </style>
-</head>
-<body>
-  <div id="global-header"></div>
-  <!-- rest of the page -->
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"><title>Dashboard – ColabFinder</title>
+  <link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="global-header"></div>
 
-  <h1>Welcome to Your Dashboard</h1>
-  <nav>
-    <a href="profile.html">Profile</a> |
-    <a href="notifications.html">Notifications</a> |
-    <a href="add-collaboration.html">Add Collaboration</a> |
-    <a href="#" onclick="supabase.auth.signOut().then(()=>location.href='login.html')">Logout</a>
-  </nav>
+<h1>Welcome to Your Dashboard</h1>
 
-  <!-- ===== EXACT-MATCH LIST (unchanged) ===== -->
-  <h2>Recommended for You</h2>
-  <div id="recommended-tag"></div>
+<h2>Recommended for You</h2>
+<div id="recommended-tag"></div>
 
-  <!-- ===== NEW SMART LIST PLACEHOLDER ===== -->
-  <h2>Recommended for You (smart)</h2>
+<h2>Recommended for You (smart)</h2>
+<div id="recommended-smart"></div>
+<button id="load-more-smart" style="display:none">Load more</button>
 
-  <!-- The script looks for these two IDs -->
-  <div id="recommended-smart"></div>
-  <button id="load-more-smart" style="display:none">Load more</button>
+<h2>Your Collaborations</h2>
+<div id="your-collabs"></div>
 
-  <!-- ===== Your collaborations section (unchanged) ===== -->
-  <h2>Your Collaborations</h2>
-  <div id="your-collabs"></div>
-
-  <!-- Supabase client -->
-  <script type="module" src="./supabaseClient.js"></script>
-
-  <!-- Your updated dashboard logic -->
-  <script type="module" src="./dashboard-script.js"></script>
+<script type="module" src="./supabaseClient.js"></script>
+<script type="module" src="./dashboard-script.js"></script>
 <script type="module" src="./header-loader.js"></script>
-</body>
-</html>
+</body></html>
