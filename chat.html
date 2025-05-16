@@ -1,21 +1,20 @@
 <!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8"><title>Chat – ColabFinder</title>
+  <meta charset="UTF-8"><title>Chat</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    #msgs { max-height:400px; overflow-y:auto; border:1px solid #ccc; padding:10px; }
-    .me   { text-align:right; }
-    .msg  { margin:6px 0; }
-  </style>
 </head><body>
 <div id="global-header"></div>
 
-<h1>Chat</h1>
-<div id="msgs"></div>
+<h1 id="topic"></h1>
 
-<form id="chat-form">
-  <input id="chat-input" placeholder="Type a message…" style="width:80%;">
-  <button>Send</button>
-</form>
+<div id="chat-wrap">
+  <div id="msgs"></div>
+  <div id="typing" style="display:none">… typing</div>
+  <div id="seen"></div>
+  <form id="chat-form" style="display:flex;border-top:1px solid #ccc">
+    <input id="chat-input" placeholder="Type a message…" style="flex:1;border:none;padding:12px">
+    <button style="padding:0 16px">Send</button>
+  </form>
+</div>
 
 <script type="module" src="./supabaseClient.js"></script>
 <script type="module" src="./header-loader.js"></script>
