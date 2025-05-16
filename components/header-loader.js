@@ -1,16 +1,22 @@
-/* header-loader.js  – fetch + inject header.html, then activate search */
+/*****************************************************************
+  header-loader.js
+  • Injects /components/header.html into #global-header
+  • Activates search bar using search_creators RPC
+*****************************************************************/
 import { supabase } from './supabaseClient.js';
 
-/* ---- fetch header HTML once ---- */
-const target = document.getElementById('global-header');
-fetch('/components/header.html')
-  .then(res => res.text())
-  .then(html => {
-    target.innerHTML = html;
-    attachSearchHandler();          // activate form after DOM inserted
-  });
+/* insert header HTML once */
+const mount = document.getElementById('global-header');
+if (mount) {
+  fetch('/components/header.html')
+    .then(res => res.text())
+    .then(html => {
+      mount.innerHTML = html;
+      attachSearchHandler();   // run after DOM inserted
+    });
+}
 
-/* ---- search handler ---- */
+/* search bar logic */
 function attachSearchHandler() {
   const form = document.getElementById('search-form');
   const input = document.getElementById('search-input');
@@ -25,10 +31,21 @@ function attachSearchHandler() {
 
     box.textContent = 'Searching…';
 
-    const { data, error } = await supabase.rpc('search_creators', { q, p_limit: 20 });
-    if (error) { box.textContent = 'Search error'; console.error(error); return; }
+    const { data, error } = await supabase.rpc('search_creators', {
+      q,
+      p_limit: 20,
+    });
 
-    if (!data.length) { box.textContent = 'No matches 😔'; return; }
+    if (error) {
+      box.textContent = 'Search error';
+      console.error(error);
+      return;
+    }
+
+    if (!data.length) {
+      box.textContent = 'No matches 😔';
+      return;
+    }
 
     box.innerHTML = data.map(r => `
       <div style="margin:8px 0;">
