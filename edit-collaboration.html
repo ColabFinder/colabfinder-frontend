@@ -3,97 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <title>Edit Collaboration – ColabFinder</title>
-  <style>
-    body   { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    label  { font-weight: 600; }
-    input, textarea { width: 100%; }
-    textarea { height: 120px; }
-    .danger { color: #d33; margin-top: 20px; border: 1px solid #d33; padding: 10px; border-radius: 6px; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- shared nav + search -->
   <div id="global-header"></div>
+
   <h1>Edit Collaboration</h1>
 
-  <form id="edit-collab">
-    <label>Title:<br><input type="text" id="title" required></label><br><br>
-    <label>Description:<br><textarea id="description" required></textarea></label><br><br>
-    <label>Type:<br><input type="text" id="type" required></label><br><br>
-    <label>Tags (comma-separated):<br><input type="text" id="tags"></label><br><br>
-
-    <button type="submit">Save Changes</button>
+  <form id="edit-form" style="display:none;">
+    <label>Title<br><input id="title"></label><br><br>
+    <label>Description<br><textarea id="desc"></textarea></label><br><br>
+    <label>Type<br><input id="type"></label><br><br>
+    <button>Save changes</button>
   </form>
 
-  <div class="danger">
-    <strong>Danger Zone</strong><br>
-    <button id="delete-btn">Delete Collaboration</button>
-  </div>
+  <p id="msg"></p>
 
-  <br><a href="dashboard.html">← Back to Dashboard</a>
-
+  <!-- scripts -->
+  <script type="module" src="./supabaseClient.js"></script>
+  <script type="module" src="./header-loader.js"></script>
   <script type="module">
-    import { supabase } from './supabaseClient.js';
+  import { supabase } from './supabaseClient.js';
 
-    const idParam = new URLSearchParams(location.search).get('id');
-    if (!idParam) { alert('No collaboration ID.'); location.href = 'dashboard.html'; }
+  const params    = new URLSearchParams(location.search);
+  const collabId  = params.get('id');
+  const form      = document.getElementById('edit-form');
+  const msg       = document.getElementById('msg');
+  const titleInp  = document.getElementById('title');
+  const descInp   = document.getElementById('desc');
+  const typeInp   = document.getElementById('type');
 
-    /* element refs */
-    const form       = document.getElementById('edit-collab');
-    const titleInput = document.getElementById('title');
-    const descInput  = document.getElementById('description');
-    const typeInput  = document.getElementById('type');
-    const tagsInput  = document.getElementById('tags');
-    const deleteBtn  = document.getElementById('delete-btn');
+  if (!collabId) {
+    msg.textContent = 'Missing collaboration id (?id=)';
+    throw new Error('no id');
+  }
 
-    /* load existing data */
-    (async () => {
-      const { data, error } = await supabase
-        .from('collaborations')
-        .select('*')
-        .eq('id', idParam)
-        .single();
-      if (error) { alert('Load failed: ' + error.message); return; }
+  /* ---- load current data ---- */
+  (async () => {
+    const { data, error } = await supabase
+      .from('collaborations')
+      .select('title,description,type')
+      .eq('id', collabId)
+      .single();
 
-      titleInput.value = data.title;
-      descInput.value  = data.description;
-      typeInput.value  = data.type;
-      tagsInput.value  = (data.tags || []).join(', ');
-    })();
+    if (error || !data) {
+      msg.textContent = 'Collaboration not found.';
+      return;
+    }
+    titleInp.value = data.title;
+    descInp.value  = data.description;
+    typeInp.value  = data.type;
+    form.style.display = 'block';
+  })();
 
-    /* save / update */
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
+  /* ---- save ---- */
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const { error } = await supabase
+      .from('collaborations')
+      .update({
+        title: titleInp.value,
+        description: descInp.value,
+        type: typeInp.value
+      })
+      .eq('id', collabId);
 
-      const { error } = await supabase
-        .from('collaborations')
-        .update({
-          title:       titleInput.value.trim(),
-          description: descInput.value.trim(),
-          type:        typeInput.value.trim(),
-          tags:        tagsInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
-        })
-        .eq('id', idParam);
-
-      if (error) { alert('Update failed: ' + error.message); return; }
-
-      /* ---- NEW: kick off vector embedding ---- */
-      await fetch('/functions/v1/batch-embed', { method: 'POST' });
-
-      location.href = 'dashboard.html';
-    });
-
-    /* delete */
-    deleteBtn.addEventListener('click', async () => {
-      if (!confirm('Delete this collaboration?')) return;
-      const { error } = await supabase
-        .from('collaborations')
-        .delete()
-        .eq('id', idParam);
-
-      if (error) alert('Delete failed: ' + error.message);
-      else location.href = 'dashboard.html';
-    });
+    if (error) { alert(error.message); return; }
+    location.href = 'dashboard.html';
+  };
   </script>
-<script type="module" src="./header-loader.js"></script>
 </body>
 </html>
