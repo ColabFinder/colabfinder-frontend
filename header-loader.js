@@ -1,8 +1,9 @@
 /*****************************************************************
-  header-loader.js  –  v3
+  header-loader.js  –  v4
   • Inject shared header
   • Debounced search (300 ms)
-  • Highlights query in results with <mark>
+  • Highlights query terms
+  • Adds “Message” link next to each result
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
@@ -27,8 +28,7 @@ function attachSearch() {
   const box   = document.getElementById('search-results');
   if (!form || !input || !box) return;
 
-  /* live search on typing with debounce */
-  input.addEventListener('input', debounce(async () => {
+  const doSearch = debounce(async () => {
     const q = input.value.trim();
     if (q.length < 2) { box.textContent = ''; return; }
 
@@ -44,15 +44,17 @@ function attachSearch() {
              style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
         &nbsp;
         <a href="profile.html?u=${r.user_id}">
-          ${r.full_name.replace(regex, '<mark>$1</mark>')}
+          ${r.full_name.replace(regex,'<mark>$1</mark>')}
         </a>
+        &nbsp;•&nbsp;
+        <a href="chat.html?u=${r.user_id}">Message</a>
         <small style="color:#666;">(${r.matched_at})</small>
       </div>
     `).join('');
-  }));
+  }, 300);
 
-  /* keep Enter key from reloading the page */
-  form.onsubmit = e => e.preventDefault();
+  input.addEventListener('input', doSearch);
+  form.onsubmit = e => e.preventDefault();  // prevent page reload
 }
 
 /* ---- escape regex special chars ---- */
