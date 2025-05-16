@@ -1,68 +1,61 @@
 /*****************************************************************
-  header-loader.js  –  v2
-  • Inject /components/header.html into #global-header
-  • Activates search form after HTML is in the DOM
-  • Adds debug logs so you can see flow in DevTools
+  header-loader.js  –  v3
+  • Inject shared header
+  • Debounced search (300 ms)
+  • Highlights query in results with <mark>
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
-/* ---- inject header once ---- */
+/* ---- inject header HTML ---- */
 const mount = document.getElementById('global-header');
 if (mount) {
   fetch('/components/header.html')
-    .then(res => res.text())
-    .then(html => {
-      mount.innerHTML = html;
-      console.log('[header] injected');
-      attachSearchHandler();
-    })
-    .catch(err => console.error('[header] load error', err));
+    .then(r => r.text())
+    .then(html => { mount.innerHTML = html; attachSearch(); })
+    .catch(err => console.error('[header] load error:', err));
+}
+
+/* ---- debounce helper ---- */
+function debounce(fn, ms = 300) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
 /* ---- search bar logic ---- */
-function attachSearchHandler() {
-  const form = document.getElementById('search-form');
+function attachSearch() {
+  const form  = document.getElementById('search-form');
   const input = document.getElementById('search-input');
-  const box = document.getElementById('search-results');
+  const box   = document.getElementById('search-results');
+  if (!form || !input || !box) return;
 
-  if (!form || !input || !box) {
-    console.warn('[search] elements not found');
-    return;
-  }
-
-  console.log('[search] handler attached');
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
+  /* live search on typing with debounce */
+  input.addEventListener('input', debounce(async () => {
     const q = input.value.trim();
-    if (q.length < 2) return;
+    if (q.length < 2) { box.textContent = ''; return; }
 
     box.textContent = 'Searching…';
+    const { data, error } = await supabase.rpc('search_creators', { q, p_limit: 20 });
+    if (error) { box.textContent = 'Search error'; console.error(error); return; }
+    if (!data.length) { box.textContent = 'No matches 😔'; return; }
 
-    const { data, error } = await supabase
-      .rpc('search_creators', { q, p_limit: 20 });
-
-    if (error) {
-      console.error('[search] RPC error', error);
-      box.textContent = 'Search error';
-      return;
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      box.textContent = 'No matches 😔';
-      return;
-    }
-
+    const regex = new RegExp(`(${escapeReg(q)})`, 'gi');
     box.innerHTML = data.map(r => `
       <div style="margin:8px 0;">
         <img src="${r.avatar_url || 'fallback-avatar.png'}"
              style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
         &nbsp;
-        <a href="profile.html?u=${r.user_id}">${r.full_name}</a>
+        <a href="profile.html?u=${r.user_id}">
+          ${r.full_name.replace(regex, '<mark>$1</mark>')}
+        </a>
         <small style="color:#666;">(${r.matched_at})</small>
       </div>
     `).join('');
+  }));
 
-    console.log(`[search] found ${data.length} results for "${q}"`);
-  };
+  /* keep Enter key from reloading the page */
+  form.onsubmit = e => e.preventDefault();
+}
+
+/* ---- escape regex special chars ---- */
+function escapeReg(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
