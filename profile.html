@@ -1,40 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Creator Profile – ColabFinder</title>
-  <style>
-    body { font-family: sans-serif; margin: 20px; max-width: 800px; }
-    nav  { margin-bottom: 24px; }
-    .avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; }
-    .collab { border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin: 12px 0; }
-    button { cursor: pointer; }
-  </style>
-</head>
-<body>
-  <div id="global-header"></div>
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"><title>Profile – ColabFinder</title>
+  <link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="global-header"></div>
 
-  <!-- simple header -->
-  <nav>
-    <a href="dashboard.html">Dashboard</a> |
-    <a href="notifications.html">Notifications</a> |
-    <a href="add-collaboration.html">Add Collaboration</a>
-  </nav>
+<section>
+  <img id="avatar" class="avatar" src="fallback-avatar.png" alt="Avatar">
+  <h2 id="full-name">Loading…</h2>
+  <p id="bio"></p>
+</section>
 
-  <!-- profile info -->
-  <section>
-    <img id="avatar" class="avatar" src="fallback-avatar.png" alt="Avatar" />
-    <h2 id="full-name">Name loading…</h2>
-    <p id="bio"></p>
-  </section>
+<h3>Collaborations</h3>
+<div id="collab-list"></div>
 
-  <!-- collaborations -->
-  <h3>Collaborations</h3>
-  <div id="collab-list"></div>
-
-  <!-- Supabase client + page logic -->
-  <script type="module" src="./supabaseClient.js"></script>
-  <script type="module" src="./profile-script.js"></script>
+<script type="module" src="./supabaseClient.js"></script>
+<script type="module" src="./profile-script.js"></script>
 <script type="module" src="./header-loader.js"></script>
-</body>
-</html>
+</body></html>
