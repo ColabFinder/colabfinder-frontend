@@ -57,3 +57,4 @@ function appendMsg(m) {
   scrollBottom();
 }
 function scrollBottom(){ msgsBox.scrollTop = msgsBox.scrollHeight; }
+await supabase.rpc('mark_read', { p_sender: recipientId, p_recipient: myId });
