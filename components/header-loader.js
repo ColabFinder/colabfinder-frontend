@@ -2,7 +2,7 @@
   header-loader.js
   • Injects /components/header.html into #global-header
   • Activates search bar using search_creators RPC
-*****************************************************************
+*****************************************************************/
 import { supabase } from './supabaseClient.js';
 
 /* insert header HTML once */
