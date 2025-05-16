@@ -6,23 +6,22 @@
 
 <h1>Add Collaboration</h1>
 <form id="add-form">
-  <input id="title" placeholder="Title"><br>
-  <textarea id="desc" placeholder="Description"></textarea><br>
-  <input id="type" placeholder="Type"><br>
+  <input id="title" placeholder="Title"><br><br>
+  <textarea id="desc" placeholder="Description"></textarea><br><br>
+  <input id="type" placeholder="Type"><br><br>
   <button>Add</button>
 </form>
 
 <script type="module" src="./supabaseClient.js"></script>
+<script type="module" src="./header-loader.js"></script>
 <script type="module">
 import { supabase } from './supabaseClient.js';
 document.getElementById('add-form').onsubmit = async e=>{
   e.preventDefault();
-  const {error}=await supabase.from('collaborations').insert([{
+  const { error } = await supabase.from('collaborations').insert([{
     title: title.value, description: desc.value, type: type.value
   }]);
-  if(error) return alert(error.message);
-  location.href='dashboard.html';
+  if(error) alert(error.message); else location.href='dashboard.html';
 };
 </script>
-<script type="module" src="./header-loader.js"></script>
 </body></html>
