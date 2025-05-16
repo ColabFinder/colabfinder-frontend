@@ -1,32 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Edit Profile – ColabFinder</title>
-  <style>
-    body   { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    label  { font-weight: 600; }
-    input, textarea { width: 100%; }
-    textarea { height: 120px; }
-  </style>
-</head>
-<body>
-  <div id="global-header"></div>
-  <h1>Edit Profile</h1>
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"><title>Edit Profile</title>
+  <link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="global-header"></div>
 
-  <form id="edit-profile">
-    <label>Full Name:<br><input id="full-name" type="text" required></label><br><br>
-    <label>Bio:<br><textarea id="bio"></textarea></label><br><br>
-    <label>Skills (comma-separated):<br><input id="skills" type="text"></label><br><br>
-    <label>Avatar URL:<br><input id="avatar-url" type="text"></label><br><br>
+<h1>Edit Profile</h1>
+<form id="edit-profile-form">
+  <input id="full-name" placeholder="Full name"><br><br>
+  <textarea id="bio" placeholder="Bio"></textarea><br><br>
+  <input id="avatar-url" placeholder="Avatar URL"><br><br>
+  <button>Save</button>
+</form>
 
-    <button type="submit">Save Profile</button>
-  </form>
-
-  <!-- NEW: easy way home -->
-  <br><a href="dashboard.html">← Back to Dashboard</a>
-
-  <script type="module" src="./edit-profile-script.js"></script>
+<script type="module" src="./supabaseClient.js"></script>
 <script type="module" src="./header-loader.js"></script>
-</body>
-</html>
+<script type="module" src="./edit-profile-script.js"></script>
+</body></html>
