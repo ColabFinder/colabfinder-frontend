@@ -1,92 +1,95 @@
 /*****************************************************************
-  chat-script.js – v2.2
-  • Fixes .or() filter (no extra parens)
-  • Loads history without 400 error
-  • Shows “Chat with <Name>”
+  chat-script.js  – v3
+  • Typing indicator via realtime.broadcast
+  • Read receipts (✓ & “Seen”)
+  • Bubble layout
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
-const params      = new URLSearchParams(location.search);
-const recipientId = params.get('u');
-
-const msgsBox = document.getElementById('msgs');
-const form    = document.getElementById('chat-form');
-const input   = document.getElementById('chat-input');
-const header  = document.querySelector('h1');
+const q          = new URLSearchParams(location.search);
+const recipientId= q.get('u');
+const msgsBox    = document.getElementById('msgs');
+const form       = document.getElementById('chat-form');
+const input      = document.getElementById('chat-input');
+const typingDiv  = document.getElementById('typing');
+const seenDiv    = document.getElementById('seen');
+const topic      = document.getElementById('topic');
 
 const { data:{session} } = await supabase.auth.getSession();
 if(!session || !recipientId){ location.href='login.html'; throw ''; }
 const myId = session.user.id;
 
-/* ---- recipient profile for header ---- */
-const { data: recProf } = await supabase
-  .from('profiles')
-  .select('full_name,avatar_url')
-  .eq('user_id', recipientId)
-  .single();
-
-header.innerHTML = `
-  Chat with
-  <img src="${recProf?.avatar_url||'fallback-avatar.png'}"
-       style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
-  ${recProf?.full_name||'Unknown'}
+/* ---- recipient profile ---- */
+const { data: prof } = await supabase
+  .from('profiles').select('full_name,avatar_url').eq('user_id',recipientId).single();
+topic.innerHTML = `
+  <img src="${prof?.avatar_url||'fallback-avatar.png'}" style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
+  Chat with ${prof?.full_name||'Unknown'}
 `;
 
-/* ---- load history ---- */
+/* ---- load history & mark read ---- */
 await loadHistory();
+await markRead();
 
-async function loadHistory(){
-  // ONE line, no outer parens – .or() will wrap it
-  const filter = `and(sender_id.eq.${myId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${myId})`;
+/* ---- realtime channel (DM + typing) ---- */
+const chan = supabase.channel('dm-'+[myId,recipientId].sort().join('-'));
 
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .or(filter)
-    .order('created_at', { ascending: true });
-
-  if (error) { console.error(error); return; }
-  data.forEach(appendMsg);
-  scrollBottom();
-}
-
-/* ---- realtime listener ---- */
-supabase.channel('dm-'+recipientId)
-  .on('postgres_changes',
-      { event:'INSERT', schema:'public', table:'messages',
-        filter:`recipient_id=eq.${myId}` },
-      payload => appendMsg(payload.new))
-  .subscribe();
+chan.on('postgres_changes',
+  {event:'INSERT',schema:'public',table:'messages',filter:`recipient_id=eq.${myId}`},
+  payload=>{ appendMsg(payload.new); markRead(); })
+ .on('broadcast',{event:'typing'},payload=>{
+     if(payload.sender===recipientId){
+       typingDiv.style.display='block';
+       clearTimeout(window._typeT); window._typeT=setTimeout(()=>typingDiv.style.display='none',1000);
+     }
+ })
+ .subscribe();
 
 /* ---- send ---- */
 form.onsubmit = async e => {
   e.preventDefault();
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
-  // insert and return the new row
-  const { data, error } = await supabase
-    .from('messages')
-    .insert([{
-      sender_id: myId,
-      recipient_id: recipientId,
-      body: text
-    }])
-    .select('id, sender_id, body')   // minimal fields
-    .single();
-
-  if (error) { alert(error.message); return; }
-
-  // append immediately
-  appendMsg(data);
+  const text=input.value.trim(); if(!text)return;
+  input.value='';
+  const { data,error } = await supabase.from('messages')
+    .insert({sender_id:myId,recipient_id:recipientId,body:text})
+    .select('*').single();
+  if(error){alert(error.message);return;}
+  appendMsg(data,true);
 };
 
+/* ---- typing indicator broadcast ---- */
+input.addEventListener('input',()=> chan.send({type:'broadcast',event:'typing',payload:{sender:myId}}));
+
 /* ---- helpers ---- */
-function appendMsg(m){
-  const div = document.createElement('div');
-  div.className = 'msg' + (m.sender_id === myId ? ' me' : '');
-  div.textContent = m.body;
-  msgsBox.appendChild(div); scrollBottom();
+async function loadHistory(){
+  const filter=`and(sender_id.eq.${myId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${myId})`;
+  const { data } = await supabase.from('messages').select('*').or(filter).order('created_at');
+  msgsBox.innerHTML='';
+  data.forEach(m=>appendMsg(m,m.sender_id===myId));
+  scrollBottom();
+  showSeen(data);
 }
-function scrollBottom(){ msgsBox.scrollTop = msgsBox.scrollHeight; }
+function appendMsg(m,fromMe=false){
+  const div=document.createElement('div');
+  div.className='msg '+(fromMe?'me':'them');
+  div.textContent=m.body;
+  msgsBox.appendChild(div);
+  scrollBottom();
+  if(fromMe) showCheck(); else typingDiv.style.display='none';
+}
+function scrollBottom(){ msgsBox.scrollTop=msgsBox.scrollHeight; }
+
+function showCheck(){ seenDiv.textContent='✓ sent'; }
+function showSeen(arr){
+  const last=arr.filter(x=>x.sender_id===myId&&x.read_at).pop();
+  if(last) seenDiv.textContent='Seen';
+}
+
+/* ---- read receipts ---- */
+async function markRead(){
+  await supabase.rpc('mark_read',{p_sender:recipientId,p_recipient:myId});
+  showSeen(await supabase.from('messages')
+    .select('id,read_at,sender_id')
+    .eq('sender_id',myId)
+    .eq('recipient_id',recipientId));
+}
