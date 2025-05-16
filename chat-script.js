@@ -1,6 +1,7 @@
 /*****************************************************************
-  chat-script.js – v2.1
-  • One-line OR filter (no newline) → 400 error resolved
+  chat-script.js – v2.2
+  • Fixes .or() filter (no extra parens)
+  • Loads history without 400 error
   • Shows “Chat with <Name>”
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
@@ -31,18 +32,22 @@ header.innerHTML = `
   ${recProf?.full_name||'Unknown'}
 `;
 
-/* ---- message history (one-line OR) ---- */
-loadHistory();
+/* ---- load history ---- */
+await loadHistory();
+
 async function loadHistory(){
-  const filter = `(and(sender_id.eq.${myId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${myId}))`;
+  // ONE line, no outer parens – .or() will wrap it
+  const filter = `and(sender_id.eq.${myId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${myId})`;
+
   const { data, error } = await supabase
     .from('messages')
     .select('*')
     .or(filter)
-    .order('created_at', { ascending:true });
+    .order('created_at', { ascending: true });
 
-  if(error){ console.error(error); return; }
-  data.forEach(appendMsg); scrollBottom();
+  if (error) { console.error(error); return; }
+  data.forEach(appendMsg);
+  scrollBottom();
 }
 
 /* ---- realtime listener ---- */
@@ -57,17 +62,19 @@ supabase.channel('dm-'+recipientId)
 form.onsubmit = async e => {
   e.preventDefault();
   const text = input.value.trim();
-  if(!text) return;
-  input.value='';
+  if (!text) return;
+  input.value = '';
   await supabase.from('messages').insert([{
-    sender_id: myId, recipient_id: recipientId, body: text
+    sender_id: myId,
+    recipient_id: recipientId,
+    body: text
   }]);
 };
 
 /* ---- helpers ---- */
 function appendMsg(m){
   const div = document.createElement('div');
-  div.className = 'msg' + (m.sender_id===myId ? ' me' : '');
+  div.className = 'msg' + (m.sender_id === myId ? ' me' : '');
   div.textContent = m.body;
   msgsBox.appendChild(div); scrollBottom();
 }
