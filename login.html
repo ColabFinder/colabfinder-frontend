@@ -1,53 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Login - ColabFinder</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Load Supabase library FIRST -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-  <h1>Welcome to ColabFinder</h1>
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"><title>Login – ColabFinder</title>
+  <link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="global-header"></div>
 
-  <button id="login-google">Login with Google</button>
+<h1>Login</h1>
+<button id="google-btn">Sign in with Google</button>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-      const supabaseUrl = 'https://eqpmbcbaqgdmrhwmvlya.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcG1iY2JhcWdkbXJod212bHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDg4ODQsImV4cCI6MjA2MDQyNDg4NH0.V3SwBCiBkGO_YxTKnE7jbdFthmXAJNbiEVcjsLUYCaM';
-
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-      document.getElementById('login-google').addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html'
-          }
-        });
-
-        if (error) {
-          console.error('Login error:', error.message);
-          alert('Login failed. Please try again.');
-        }
-      });
-
-      // Check if we have a code to exchange for a session
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-
-      if (code) {
-        const { data, error } = await supabase.auth.exchangeCodeForSession();
-        if (error) {
-          console.error('Session exchange error:', error.message);
-        } else if (data?.session) {
-          console.log('✅ Logged in successfully!');
-          window.location.href = 'https://colabfinder-frontend-git-main-olegs-projects-2334afcf.vercel.app/dashboard.html';
-        }
-      }
-    });
-  </script>
+<script type="module" src="./supabaseClient.js"></script>
 <script type="module" src="./header-loader.js"></script>
-</body>
-</html>
+<script type="module">
+import { supabase } from './supabaseClient.js';
+document.getElementById('google-btn').onclick = ()=>
+  supabase.auth.signInWithOAuth({ provider:'google', redirectTo:'dashboard.html' });
+</script>
+</body></html>
