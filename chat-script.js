@@ -64,11 +64,22 @@ form.onsubmit = async e => {
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
-  await supabase.from('messages').insert([{
-    sender_id: myId,
-    recipient_id: recipientId,
-    body: text
-  }]);
+
+  // insert and return the new row
+  const { data, error } = await supabase
+    .from('messages')
+    .insert([{
+      sender_id: myId,
+      recipient_id: recipientId,
+      body: text
+    }])
+    .select('id, sender_id, body')   // minimal fields
+    .single();
+
+  if (error) { alert(error.message); return; }
+
+  // append immediately
+  appendMsg(data);
 };
 
 /* ---- helpers ---- */
