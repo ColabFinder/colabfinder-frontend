@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"><title>Messages – ColabFinder</title>
+  <link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="global-header"></div>
+
+<h1>Messages</h1>
+<div id="inbox"></div>
+
+<script type="module" src="./supabaseClient.js"></script>
+<script type="module" src="./header-loader.js"></script>
+<script type="module">
+import { supabase } from './supabaseClient.js';
+
+const inbox = document.getElementById('inbox');
+const { data: { session } } = await supabase.auth.getSession();
+if(!session) { location.href='login.html'; throw ''; }
+const myId=session.user.id;
+
+/* load last msg per conversation */
+const { data, error } = await supabase
+  .from('inbox')
+  .select('*')
+  .or(`sender_id.eq.${myId},recipient_id.eq.${myId}`)
+  .order('created_at', { ascending:false });
+
+if(error){ inbox.textContent='Error'; console.error(error); }
+
+data.forEach(row=>{
+  const other = row.sender_id === myId ? row.recipient_id : row.sender_id;
+  const snippet = row.body.length>40? row.body.slice(0,40)+'…' : row.body;
+  inbox.insertAdjacentHTML('beforeend',`
+    <div class="collab">
+      <a href="chat.html?u=${other}">
+        <b>${row.created_at.slice(0,10)}</b> – ${snippet}
+      </a>
+    </div>`);
+});
+</script>
+</body></html>
