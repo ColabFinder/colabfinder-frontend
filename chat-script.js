@@ -1,5 +1,7 @@
 /*****************************************************************
-  chat-script.js – v2  (shows recipient name)
+  chat-script.js – v2.1
+  • One-line OR filter (no newline) → 400 error resolved
+  • Shows “Chat with <Name>”
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
@@ -15,7 +17,7 @@ const { data:{session} } = await supabase.auth.getSession();
 if(!session || !recipientId){ location.href='login.html'; throw ''; }
 const myId = session.user.id;
 
-/* ---- load recipient profile for header ---- */
+/* ---- recipient profile for header ---- */
 const { data: recProf } = await supabase
   .from('profiles')
   .select('full_name,avatar_url')
@@ -23,13 +25,25 @@ const { data: recProf } = await supabase
   .single();
 
 header.innerHTML = `
-  Chat with <img src="${recProf?.avatar_url||'fallback-avatar.png'}"
-                  style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
+  Chat with
+  <img src="${recProf?.avatar_url||'fallback-avatar.png'}"
+       style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
   ${recProf?.full_name||'Unknown'}
 `;
 
-/* ---- history ---- */
+/* ---- message history (one-line OR) ---- */
 loadHistory();
+async function loadHistory(){
+  const filter = `(and(sender_id.eq.${myId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${myId}))`;
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(filter)
+    .order('created_at', { ascending:true });
+
+  if(error){ console.error(error); return; }
+  data.forEach(appendMsg); scrollBottom();
+}
 
 /* ---- realtime listener ---- */
 supabase.channel('dm-'+recipientId)
@@ -51,22 +65,10 @@ form.onsubmit = async e => {
 };
 
 /* ---- helpers ---- */
-async function loadHistory(){
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .or(`and(sender_id.eq.${myId},recipient_id.eq.${recipientId}),
-          and(sender_id.eq.${recipientId},recipient_id.eq.${myId})`)
-    .order('created_at', { ascending:true });
-  if(error){ console.error(error); return; }
-  data.forEach(appendMsg);
-  scrollBottom();
-}
 function appendMsg(m){
   const div = document.createElement('div');
-  div.className='msg'+(m.sender_id===myId?' me':'');
+  div.className = 'msg' + (m.sender_id===myId ? ' me' : '');
   div.textContent = m.body;
-  msgsBox.appendChild(div);
-  scrollBottom();
+  msgsBox.appendChild(div); scrollBottom();
 }
 function scrollBottom(){ msgsBox.scrollTop = msgsBox.scrollHeight; }
