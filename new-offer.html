@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"><title>New Offer</title>
+  <link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="global-header"></div>
+
+<h1>Create Offer</h1>
+<form id="offer-form">
+  <label>Title<br><input id="title"></label><br><br>
+  <label>Brief<br><textarea id="brief"></textarea></label><br><br>
+  <label>Payout (USD)<br><input type="number" id="payout" min="0"></label><br><br>
+  <label>Platforms (comma separated)<br><input id="platforms" placeholder="instagram,tiktok"></label><br><br>
+  <label>Deadline<br><input type="date" id="deadline"></label><br><br>
+  <button>Publish</button>
+</form>
+
+<script type="module" src="./supabaseClient.js"></script>
+<script type="module" src="./header-loader.js"></script>
+<script type="module">
+import { supabase } from './supabaseClient.js';
+
+const { data:{session} } = await supabase.auth.getSession();
+if(!session){ location.href='login.html'; throw ''; }
+
+document.getElementById('offer-form').onsubmit = async e=>{
+  e.preventDefault();
+  const { error } = await supabase.from('market_offers').insert([{
+     owner_id:   session.user.id,
+     title:      title.value,
+     brief:      brief.value,
+     payout_cents: Math.round(parseFloat(payout.value||0)*100),
+     platforms:  platforms.value.split(',').map(s=>s.trim().toLowerCase()),
+     deadline:   deadline.value||null
+  }]);
+  if(error) alert(error.message); else location.href='marketplace.html';
+};
+</script>
+</body></html>
