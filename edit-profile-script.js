@@ -1,74 +1,53 @@
 /*****************************************************************
-  edit-profile-script.js – full replacement
-  • Loads current profile
-  • Upserts edits (creates or updates row)
-  • Fires /functions/v1/batch-embed after save
+  edit-profile-script.js  –  fixed redeclaration error
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
-/* ---------- element refs ---------- */
-const fullName = document.getElementById('full-name');
-const bio      = document.getElementById('bio');
-const skills   = document.getElementById('skills');
-const avatar   = document.getElementById('avatar-url');
-const form     = document.getElementById('edit-profile');
+const fullInp   = document.getElementById('full-name');
+const bioInp    = document.getElementById('bio');
+const avatarInp = document.getElementById('avatar-url');
+const brandChk  = document.getElementById('is-brand');
+const form      = document.getElementById('edit-profile-form');
 
-/* ---------- load existing data ---------- */
+/* ----- load current profile ----- */
 (async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return (location.href = 'login.html');
+  const { data:{session} } = await supabase.auth.getSession();
+  if (!session) { location.href = 'login.html'; return; }
 
-  const { data, error } = await supabase
+  const { data: prof, error: loadErr } = await supabase
     .from('profiles')
-    .select('*')
+    .select('full_name,bio,avatar_url,is_brand')
     .eq('user_id', session.user.id)
     .single();
 
-  if (error && error.code !== 'PGRST116') {      // ignore "row not found"
-    alert('Load failed'); return;
-  }
+  if (loadErr) { alert(loadErr.message); return; }
 
-  if (data) {
-    fullName.value = data.full_name ?? '';
-    bio.value      = data.bio ?? '';
-    skills.value   = (data.skills ?? []).join(', ');
-    avatar.value   = data.avatar_url ?? '';
-  }
+  fullInp.value   = prof.full_name   ?? '';
+  bioInp.value    = prof.bio        ?? '';
+  avatarInp.value = prof.avatar_url ?? '';
+  brandChk.checked = !!prof.is_brand;
 })();
 
-/* ---------- save / upsert ---------- */
-form.addEventListener('submit', async e => {
+/* ----- save profile ----- */
+form.onsubmit = async e => {
   e.preventDefault();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return alert('Session expired, please log in again.');
 
-  const payload = {
-    user_id:    session.user.id,                         // required for upsert
-    full_name:  fullName.value.trim(),
-    bio:        bio.value.trim(),
-    skills:     skills.value.split(',')
-                   .map(s => s.trim().toLowerCase())
-                   .filter(Boolean),
-    avatar_url: avatar.value.trim()
+  const { data:{session} } = await supabase.auth.getSession();
+  if (!session) return;
+
+  const update = {
+    full_name:  fullInp.value.trim(),
+    bio:        bioInp.value.trim(),
+    avatar_url: avatarInp.value.trim(),
+    is_brand:   brandChk.checked
   };
 
-  const { error } = await supabase
+  const { error: updateErr } = await supabase
     .from('profiles')
-    .upsert(payload, { onConflict: 'user_id' });         // create or update
+    .update(update)
+    .eq('user_id', session.user.id);
 
-  if (error) return alert('Save failed: ' + error.message);
+  if (updateErr) { alert(updateErr.message); return; }
 
-  /* inside loadProfile() after fetching data */
-document.getElementById('is-brand').checked = !!data.is_brand;
-
-/* inside save handler */
-const { error } = await supabase.from('profiles').update({
-  full_name: full.value, bio: bio.value, avatar_url: avatar.value,
-  is_brand: document.getElementById('is-brand').checked
-}).eq('user_id', session.user.id);
-
-  /* ---- kick off vector embedding ---- */
-  fetch('/functions/v1/batch-embed', { method: 'POST' }); // fire-and-forget
-
-  location.href = 'dashboard.html';
-});
+  location.href = 'profile.html';
+};
