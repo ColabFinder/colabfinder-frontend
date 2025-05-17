@@ -15,6 +15,7 @@ if (!targetId) {
 const meId = session ? session.user.id : null;
 
 /* ---- load profile ---- */
+fullNameEl.textContent = profile.full_name + tagBrand(profile.is_brand);
 const { data: profile, error: pErr } = await supabase
   .from('profiles')
   .select('full_name,bio,avatar_url')
