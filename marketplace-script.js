@@ -9,6 +9,8 @@ const kw  = document.getElementById('kw');
 const plat= document.getElementById('plat');
 const pay = document.getElementById('min-pay');
 
+<h3>${o.title} [BRAND]</h3>
+
 btn.onclick = loadOffers;
 loadOffers();
 
