@@ -58,6 +58,15 @@ form.addEventListener('submit', async e => {
 
   if (error) return alert('Save failed: ' + error.message);
 
+  /* inside loadProfile() after fetching data */
+document.getElementById('is-brand').checked = !!data.is_brand;
+
+/* inside save handler */
+const { error } = await supabase.from('profiles').update({
+  full_name: full.value, bio: bio.value, avatar_url: avatar.value,
+  is_brand: document.getElementById('is-brand').checked
+}).eq('user_id', session.user.id);
+
   /* ---- kick off vector embedding ---- */
   fetch('/functions/v1/batch-embed', { method: 'POST' }); // fire-and-forget
 
