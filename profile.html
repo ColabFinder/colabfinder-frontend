@@ -1,19 +1,45 @@
-<!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8"><title>Profile – ColabFinder</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Profile – ColabFinder</title>
   <link rel="stylesheet" href="styles.css">
-</head><body>
-<div id="global-header"></div>
+</head>
+<body>
+  <!-- shared header -->
+  <div id="global-header"></div>
 
-<section>
-  <img id="avatar" class="avatar" src="fallback-avatar.png" alt="Avatar">
-  <h2 id="full-name">Loading…</h2>
-  <p id="bio"></p>
-</section>
+  <!-- edit button (shown only if viewing own profile) -->
+  <button id="edit-btn" style="float:right;display:none;">Edit Profile</button>
 
-<h3>Collaborations</h3>
-<div id="collab-list"></div>
+  <!-- profile header -->
+  <section>
+    <img id="avatar" class="avatar" src="fallback-avatar.png" alt="Avatar">
+    <h2 id="full-name">Loading…</h2>
+    <p id="bio"></p>
+  </section>
 
-<script type="module" src="./supabaseClient.js"></script>
-<script type="module" src="./profile-script.js"></script>
-<script type="module" src="./header-loader.js"></script>
-</body></html>
+  <!-- collaborations -->
+  <h3>Collaborations</h3>
+  <div id="collab-list"></div>
+
+  <!-- scripts -->
+  <script type="module" src="./supabaseClient.js"></script>
+  <script type="module" src="./header-loader.js"></script>
+  <script type="module" src="./profile-script.js"></script>
+  <script type="module">
+  /* small helper so the script needn’t change */
+  import { supabase } from './supabaseClient.js';
+  const btn = document.getElementById('edit-btn');
+  btn.onclick = () => location.href = 'edit-profile.html';
+
+  /* show button only for own profile (same logic profile-script uses) */
+  const params = new URLSearchParams(location.search);
+  let targetId = params.get('u');
+  supabase.auth.getSession().then(({data:{session}})=>{
+    if (!targetId && session) targetId = session.user.id;
+    if (session && session.user.id === targetId) btn.style.display='inline-block';
+  });
+  </script>
+</body>
+</html>
