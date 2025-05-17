@@ -1,33 +1,24 @@
 /*****************************************************************
-  header-loader.js  –  v6  (brand-aware)
-  • Injects /components/header.html into #global-header
-  • Debounced search (300 ms) with term highlight + “Message” link
-  • Logout link
-  • Unread DM badge (real-time)
-  • Shows “New Offer” link only if profile.is_brand = true
+  header-loader.js  –  v7
+  • Shared header injection
+  • Debounced search + “Message” link
+  • Logout, unread badge, “New Offer” for brands
+  • Adds simple  [BRAND]  tag
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
+/* helper */
 const tagBrand = isBrand => isBrand ? ' [BRAND]' : '';
-}
 
-/* ----------------------------------------------------------------
-   1. Inject shared header HTML
----------------------------------------------------------------- */
+/* inject header */
 const mount = document.getElementById('global-header');
 if (mount) {
   fetch('/components/header.html')
     .then(r => r.text())
-    .then(html => {
-      mount.innerHTML = html;
-      initHeader();
-    })
+    .then(html => { mount.innerHTML = html; initHeader(); })
     .catch(err => console.error('[header] load error:', err));
 }
 
-/* ----------------------------------------------------------------
-   2. Initialise header features after HTML is in DOM
----------------------------------------------------------------- */
 function initHeader() {
   attachSearch();
   attachLogout();
@@ -35,116 +26,77 @@ function initHeader() {
   startUnreadBadge();
 }
 
-/* ----------------------------------------------------------------
-   3. Logout handler
----------------------------------------------------------------- */
-function attachLogout() {
-  const link = document.getElementById('logout-link');
-  if (link) {
-    link.onclick = () =>
-      supabase.auth.signOut()
-        .then(() => location.href = 'login.html');
-  }
+/* logout */
+function attachLogout(){
+  const link=document.getElementById('logout-link');
+  if(link) link.onclick=()=>supabase.auth.signOut().then(()=>location.href='login.html');
 }
 
-/* ----------------------------------------------------------------
-   4. Show “New Offer” link only for brand users
----------------------------------------------------------------- */
-async function showNewOfferIfBrand() {
-  const link = document.getElementById('new-offer-link');
-  if (!link) return;
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('is_brand')
-    .eq('user_id', session.user.id)
-    .single();
-
-  if (!error && data?.is_brand) link.style.display = 'inline';
+/* brand-only link */
+async function showNewOfferIfBrand(){
+  const link=document.getElementById('new-offer-link');
+  if(!link) return;
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session) return;
+  const {data}=await supabase.from('profiles')
+    .select('is_brand').eq('user_id',session.user.id).single();
+  if(data?.is_brand) link.style.display='inline';
 }
 
-/* ----------------------------------------------------------------
-   5. Unread DM badge – live update
----------------------------------------------------------------- */
-async function startUnreadBadge() {
-  const badge = document.getElementById('msg-badge');
-  if (!badge) return;
+/* unread DM badge */
+async function startUnreadBadge(){
+  const badge=document.getElementById('msg-badge');
+  if(!badge) return;
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session) return; const myId=session.user.id;
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-  const myId = session.user.id;
-
-  const refresh = async () => {
-    const { count } = await supabase
-      .from('messages')
-      .select('*', { head: true, count: 'exact' })
-      .eq('recipient_id', myId)
-      .is('read_at', null);
-
-    badge.style.display = count ? 'inline' : 'none';
+  const refresh=async()=>{
+    const {count}=await supabase.from('messages')
+      .select('*',{count:'exact',head:true})
+      .eq('recipient_id',myId).is('read_at',null);
+    badge.style.display=count?'inline':'none';
   };
-
-  // initial count
   refresh();
-
-  // realtime – any new message addressed to me
-  supabase.channel('msg-badge-' + myId)
+  supabase.channel('msg-badge-'+myId)
     .on('postgres_changes',
-        { event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `recipient_id=eq.${myId}` },
-        refresh)
-    .subscribe();
+        {event:'INSERT',schema:'public',table:'messages',filter:`recipient_id=eq.${myId}`},
+        refresh).subscribe();
 }
 
-/* ----------------------------------------------------------------
-   6. Search bar with debounce + highlight
----------------------------------------------------------------- */
-function debounce(fn, ms = 300) {
-  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
+/* search with tag */
+function debounce(fn,ms=300){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+function escapeReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 
-function attachSearch() {
-  const form  = document.getElementById('search-form');
-  const input = document.getElementById('search-input');
-  const box   = document.getElementById('search-results');
-  if (!form || !input || !box) return;
+function attachSearch(){
+  const form=document.getElementById('search-form'),
+        input=document.getElementById('search-input'),
+        box=document.getElementById('search-results');
+  if(!form||!input||!box) return;
 
-  /** run search after debounce */
-  const doSearch = debounce(async () => {
-    const q = input.value.trim();
-    if (q.length < 2) { box.textContent = ''; return; }
+  const doSearch=debounce(async()=>{
+    const q=input.value.trim();
+    if(q.length<2){box.textContent='';return;}
 
-    box.textContent = 'Searching…';
-    const { data, error } = await supabase.rpc('search_creators', { q, p_limit: 20 });
+    box.textContent='Searching…';
+    const {data,error}=await supabase.rpc('search_creators',{q,p_limit:20});
+    if(error){box.textContent='Search error';console.error(error);return;}
+    if(!data.length){box.textContent='No matches 😔';return;}
 
-    if (error)  { box.textContent = 'Search error'; console.error(error); return; }
-    if (!data.length) { box.textContent = 'No matches 😔'; return; }
-
-    const regex = new RegExp(`(${escapeReg(q)})`, 'gi');
-    box.innerHTML = data.map(r => `
+    const re=new RegExp(`(${escapeReg(q)})`,'gi');
+    box.innerHTML=data.map(r=>`
       <div style="margin:8px 0;">
-        <img src="${r.avatar_url || 'fallback-avatar.png'}"
+        <img src="${r.avatar_url||'fallback-avatar.png'}"
              style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
         &nbsp;
         <a href="profile.html?u=${r.user_id}">
-         ${r.full_name.replace(regex,'<mark>$1</mark>')}${tagBrand(r.is_brand)}
+          ${r.full_name.replace(re,'<mark>$1</mark>')}${tagBrand(r.is_brand)}
         </a>
         &nbsp;•&nbsp;
         <a href="chat.html?u=${r.user_id}">Message</a>
         <small style="color:#666;">(${r.matched_at})</small>
-      </div>
-    `).join('');
-  }, 300);
+      </div>`).join('');
+  },300);
 
-  input.addEventListener('input', doSearch);
-  form.onsubmit = e => e.preventDefault();  // prevent page reload
-}
-
-function escapeReg(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  input.addEventListener('input',doSearch);
+  form.onsubmit=e=>e.preventDefault();
 }
