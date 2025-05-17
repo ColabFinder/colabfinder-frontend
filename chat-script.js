@@ -32,6 +32,8 @@ topic.innerHTML = `
   Chat with ${prof?.full_name||'Unknown'}
 `;
 
+topic.textContent = `Chat with ${prof.full_name}${tagBrand(prof.is_brand)}`;
+
 /* ---- load history & mark read ---- */
 await loadHistory();
 await markRead();
