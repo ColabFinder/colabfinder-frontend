@@ -1,13 +1,16 @@
 /*****************************************************************
-  chat-script.js  – v3.1
-  • Fixes TypeError: arr.filter is not a function
-  • Typing indicator, read receipts, nicer layout
+  chat-script.js  – v3.2
+  • Fix: defines tagBrand helper (prevents ReferenceError)
+  • All other features unchanged
 *****************************************************************/
 import { supabase } from './supabaseClient.js';
 
-const q           = new URLSearchParams(location.search);
-const recipientId = q.get('u');
+/* helper */
+const tagBrand = isBrand => isBrand ? ' [BRAND]' : '';
 
+/* DOM */
+const qs        = new URLSearchParams(location.search);
+const recipient = qs.get('u');
 const msgsBox   = document.getElementById('msgs');
 const form      = document.getElementById('chat-form');
 const input     = document.getElementById('chat-input');
@@ -15,38 +18,34 @@ const typingDiv = document.getElementById('typing');
 const seenDiv   = document.getElementById('seen');
 const topic     = document.getElementById('topic');
 
+/* session */
 const { data:{session} } = await supabase.auth.getSession();
-if (!session || !recipientId) { location.href = 'login.html'; throw ''; }
+if (!session || !recipient) { location.href = 'login.html'; throw ''; }
 const myId = session.user.id;
 
-/* ---- recipient profile ---- */
+/* recipient profile */
 const { data: prof } = await supabase
   .from('profiles')
-  .select('full_name,avatar_url')
-  .eq('user_id', recipientId)
+  .select('full_name,avatar_url,is_brand')
+  .eq('user_id', recipient)
   .single();
 
-/* inside recipient profile fetch */
-topic.textContent = `Chat with ${prof.full_name}${prof.is_brand?' [BRAND]':''}`;
+topic.textContent =
+  `Chat with ${prof.full_name}${tagBrand(prof.is_brand)}`;
 
-topic.textContent = `Chat with ${prof.full_name}${tagBrand(prof.is_brand)}`;
-
-/* ---- load history & mark read ---- */
+/* history & read */
 await loadHistory();
 await markRead();
 
-/* ---- realtime channel ---- */
-const chan = supabase.channel('dm-'+[myId,recipientId].sort().join('-'));
+/* realtime channel */
+const chan = supabase.channel('dm-'+[myId,recipient].sort().join('-'));
 
 chan.on('postgres_changes',
-        { event:'INSERT', schema:'public', table:'messages',
-          filter:`recipient_id=eq.${myId}` },
-        async payload => {
-          appendMsg(payload.new);
-          await markRead();
-        })
+        {event:'INSERT',schema:'public',table:'messages',
+         filter:`recipient_id=eq.${myId}`},
+        async payload => { appendMsg(payload.new); await markRead(); })
     .on('broadcast',{event:'typing'},payload=>{
-        if(payload.sender===recipientId){
+        if(payload.sender===recipient){
           typingDiv.style.display='block';
           clearTimeout(window._typeT);
           window._typeT=setTimeout(()=>typingDiv.style.display='none',1000);
@@ -54,77 +53,53 @@ chan.on('postgres_changes',
     })
     .subscribe();
 
-/* ---- send ---- */
+/* send */
 form.onsubmit = async e => {
   e.preventDefault();
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
+  const text = input.value.trim(); if(!text) return;
+  input.value='';
   const { data, error } = await supabase
     .from('messages')
-    .insert({ sender_id: myId, recipient_id: recipientId, body: text })
+    .insert({ sender_id: myId, recipient_id: recipient, body: text })
     .select('*')
     .single();
-
-  if (error) { alert(error.message); return; }
-
-  appendMsg(data, true);
+  if(error){alert(error.message);return;}
+  appendMsg(data,true);
 };
 
-/* ---- typing indicator broadcast ---- */
+/* broadcast typing */
 input.addEventListener('input', () =>
-  chan.send({ type:'broadcast', event:'typing', payload:{ sender: myId } })
-);
+  chan.send({type:'broadcast',event:'typing',payload:{sender:myId}}));
 
-/* ---------- helpers ---------- */
-async function loadHistory() {
-  const filter =
-    `and(sender_id.eq.${myId},recipient_id.eq.${recipientId}),` +
-    `and(sender_id.eq.${recipientId},recipient_id.eq.${myId})`;
-
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .or(filter)
-    .order('created_at');
-
-  if (error) { console.error(error); return; }
-
-  msgsBox.innerHTML = '';
-  data.forEach(m => appendMsg(m, m.sender_id === myId));
-  scrollBottom();
+/* helpers */
+async function loadHistory(){
+  const f = `and(sender_id.eq.${myId},recipient_id.eq.${recipient}),
+             and(sender_id.eq.${recipient},recipient_id.eq.${myId})`;
+  const { data } = await supabase.from('messages').select('*').or(f).order('created_at');
+  msgsBox.innerHTML='';
+  data.forEach(m=>appendMsg(m,m.sender_id===myId));
+  scroll();
   showSeen(data);
 }
-
-function appendMsg(m, fromMe = false) {
-  const div = document.createElement('div');
-  div.className = 'msg ' + (fromMe ? 'me' : 'them');
-  div.textContent = m.body;
-  msgsBox.appendChild(div);
-  scrollBottom();
-  if (fromMe) showCheck();
-  typingDiv.style.display = 'none';
+function appendMsg(m,fromMe=false){
+  const div=document.createElement('div');
+  div.className='msg '+(fromMe?'me':'them');
+  div.textContent=m.body;
+  msgsBox.appendChild(div); scroll();
+  if(fromMe) seenDiv.textContent='✓ sent';
+  typingDiv.style.display='none';
 }
-
-function scrollBottom() { msgsBox.scrollTop = msgsBox.scrollHeight; }
-
-function showCheck()   { seenDiv.textContent = '✓ sent'; }
-
-function showSeen(arr) {
-  const last = arr?.filter(x => x.sender_id === myId && x.read_at).pop();
-  seenDiv.textContent = last ? 'Seen' : '';
+function scroll(){ msgsBox.scrollTop=msgsBox.scrollHeight; }
+function showSeen(arr){
+  const last=arr.filter(x=>x.sender_id===myId&&x.read_at).pop();
+  seenDiv.textContent=last?'Seen':'';
 }
-
-/* ---- mark all received msgs as read ---- */
-async function markRead() {
-  await supabase.rpc('mark_read', { p_sender: recipientId, p_recipient: myId });
-
+async function markRead(){
+  await supabase.rpc('mark_read',{p_sender:recipient,p_recipient:myId});
   const { data } = await supabase
     .from('messages')
     .select('id,read_at,sender_id')
     .eq('sender_id', myId)
-    .eq('recipient_id', recipientId);
-
+    .eq('recipient_id', recipient);
   showSeen(data);
 }
