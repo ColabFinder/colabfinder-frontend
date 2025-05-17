@@ -132,7 +132,7 @@ function attachSearch() {
              style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
         &nbsp;
         <a href="profile.html?u=${r.user_id}">
-          ${r.full_name.replace(regex, '<mark>$1</mark>')}
+         ${r.full_name.replace(regex,'<mark>$1</mark>')}${tagBrand(r.is_brand)}
         </a>
         &nbsp;•&nbsp;
         <a href="chat.html?u=${r.user_id}">Message</a>
