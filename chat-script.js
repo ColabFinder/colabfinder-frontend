@@ -33,9 +33,27 @@ const { data: prof } = await supabase
 topic.textContent =
   `Chat with ${prof.full_name}${tagBrand(prof.is_brand)}`;
 
-/* history & read */
-await loadHistory();
-await markRead();
+/* ----- replace loadHistory() in chat-script.js ----- */
+async function loadHistory() {
+  // Build OR filter on a single line (no newline / extra spaces)
+  const filter =
+    `and(sender_id.eq.${myId},recipient_id.eq.${recipient}),` +
+    `and(sender_id.eq.${recipient},recipient_id.eq.${myId})`;
+
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(filter)
+    .order('created_at');
+
+  if (error) { console.error(error); return; }
+  if (!data)  { return; }        // safety guard
+
+  msgsBox.innerHTML = '';
+  data.forEach(m => appendMsg(m, m.sender_id === myId));
+  scroll();
+  showSeen(data);
+}
 
 /* realtime channel */
 const chan = supabase.channel('dm-'+[myId,recipient].sort().join('-'));
