@@ -26,11 +26,8 @@ const { data: prof } = await supabase
   .eq('user_id', recipientId)
   .single();
 
-topic.innerHTML = `
-  <img src="${prof?.avatar_url||'fallback-avatar.png'}"
-       style="width:32px;height:32px;border-radius:50%;vertical-align:middle">
-  Chat with ${prof?.full_name||'Unknown'}
-`;
+/* inside recipient profile fetch */
+topic.textContent = `Chat with ${prof.full_name}${prof.is_brand?' [BRAND]':''}`;
 
 topic.textContent = `Chat with ${prof.full_name}${tagBrand(prof.is_brand)}`;
 
